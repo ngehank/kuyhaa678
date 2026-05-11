@@ -12,7 +12,6 @@ env/
 ENV/
 .venv/
 
-
 # Environment Variables
 .env
 

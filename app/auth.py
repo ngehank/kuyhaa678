@@ -21,11 +21,11 @@ def login():
 
         user = User.query.filter_by(username=username).first()
         if not user or not check_password_hash(user.password_hash, password):
-            flash('Username atau password salah.', 'danger')
+            flash('Incorrect username or password.', 'danger')
             return render_template('auth/login.html')
 
         if not user.is_admin and not user.is_approved:
-            flash('Akun Anda belum disetujui admin. Silakan tunggu persetujuan.', 'warning')
+            flash('Your account is pending admin approval. Please wait.', 'warning')
             return render_template('auth/login.html')
 
         login_user(user, remember=remember)
@@ -48,27 +48,27 @@ def register():
         confirm = request.form.get('confirm_password', '')
 
         if not username or not email or not password:
-            flash('Semua field harus diisi.', 'danger')
+            flash('All fields are required.', 'danger')
             return render_template('auth/register.html')
 
         if len(username) < 3:
-            flash('Username minimal 3 karakter.', 'danger')
+            flash('Username must be at least 3 characters.', 'danger')
             return render_template('auth/register.html')
 
         if password != confirm:
-            flash('Password tidak cocok.', 'danger')
+            flash('Passwords do not match.', 'danger')
             return render_template('auth/register.html')
 
         if len(password) < 6:
-            flash('Password minimal 6 karakter.', 'danger')
+            flash('Password must be at least 6 characters.', 'danger')
             return render_template('auth/register.html')
 
         if User.query.filter_by(username=username).first():
-            flash('Username sudah digunakan.', 'danger')
+            flash('Username is already taken.', 'danger')
             return render_template('auth/register.html')
 
         if User.query.filter_by(email=email).first():
-            flash('Email sudah terdaftar.', 'danger')
+            flash('Email is already registered.', 'danger')
             return render_template('auth/register.html')
 
         user = User(
@@ -80,7 +80,7 @@ def register():
         )
         db.session.add(user)
         db.session.commit()
-        flash('Registrasi berhasil! Menunggu persetujuan admin.', 'success')
+        flash('Registration successful! Waiting for admin approval.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html')
@@ -90,5 +90,5 @@ def register():
 @login_required
 def logout():
     logout_user()
-    flash('Anda telah logout.', 'info')
+    flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))

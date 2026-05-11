@@ -4,17 +4,17 @@
 <div class="page-header">
   <div class="flex-between">
     <div>
-      <h2 class="page-title">🗄️ Database Cookies</h2>
-      <p class="page-subtitle">{{ pagination.total }} cookies tersimpan</p>
+      <h2 class="page-title">🗄️ Cookies Database</h2>
+      <p class="page-subtitle">{{ pagination.total }} cookies saved</p>
     </div>
     <div class="flex gap-2">
-      <form method="POST" action="{{ url_for('admin.delete_expired') }}" onsubmit="return confirm('Hapus semua cookies expired?')">
-        <button class="btn btn-secondary btn-sm">🗑️ Hapus Expired</button>
+      <form method="POST" action="{{ url_for('admin.delete_expired') }}" onsubmit="return confirm('Delete all expired cookies?')">
+        <button class="btn btn-secondary btn-sm">🗑️ Delete Expired</button>
       </form>
-      <form method="POST" action="{{ url_for('admin.delete_all') }}" onsubmit="return confirm('⚠️ PERINGATAN: Yakin ingin MENGHAPUS SEMUA data cookies dari database? Tindakan ini tidak bisa dibatalkan!')">
-        <button class="btn btn-danger btn-sm">🧨 Hapus Semua</button>
+      <form method="POST" action="{{ url_for('admin.delete_all') }}" onsubmit="return confirm('⚠️ WARNING: Are you sure you want to DELETE ALL cookies from the database? This action cannot be undone!')">
+        <button class="btn btn-danger btn-sm">🧨 Delete All</button>
       </form>
-      <a href="{{ url_for('admin.check') }}" class="btn btn-primary btn-sm">🔍 Check Baru</a>
+      <a href="{{ url_for('admin.check') }}" class="btn btn-primary btn-sm">🔍 New Check</a>
     </div>
   </div>
 </div>
@@ -23,30 +23,30 @@
 <div class="card mb-3">
   <form method="GET" class="flex" style="gap:12px;flex-wrap:wrap;align-items:flex-end;">
     <div class="form-group" style="margin:0;flex:1;min-width:120px;">
-      <label class="form-label">Filter Layanan</label>
+      <label class="form-label">Service Filter</label>
       <select name="service" class="form-control">
-        <option value="">Semua Layanan</option>
+        <option value="">All Services</option>
         <option value="netflix" {% if service_filter=='netflix' %}selected{% endif %}>Netflix</option>
         <option value="primevideo" {% if service_filter=='primevideo' %}selected{% endif %}>Prime Video</option>
       </select>
     </div>
     <div class="form-group" style="margin:0;flex:1;min-width:150px;">
-      <label class="form-label">Filter Plan</label>
+      <label class="form-label">Plan Filter</label>
       <select name="plan" class="form-control">
-        <option value="">Semua Plan</option>
+        <option value="">All Plans</option>
         {% for p in plans %}<option value="{{ p.plan_key }}" {% if plan_filter==p.plan_key %}selected{% endif %}>{{ p.plan_name or p.plan_key }}</option>{% endfor %}
       </select>
     </div>
     <div class="form-group" style="margin:0;flex:1;min-width:120px;">
-      <label class="form-label">Filter Negara</label>
+      <label class="form-label">Country Filter</label>
       <select name="country" class="form-control">
-        <option value="">Semua Negara</option>
+        <option value="">All Countries</option>
         {% for c in countries %}<option value="{{ c.country }}" {% if country_filter==c.country %}selected{% endif %}>{{ c.country }}</option>{% endfor %}
       </select>
     </div>
     <div class="form-group" style="margin:0;flex:2;min-width:180px;">
-      <label class="form-label">Cari</label>
-      <input type="text" name="search" class="form-control" placeholder="Email, nama, negara..." value="{{ search }}">
+      <label class="form-label">Search</label>
+      <input type="text" name="search" class="form-control" placeholder="Email, name, country..." value="{{ search }}">
     </div>
     <button type="submit" class="btn btn-primary btn-sm" style="margin-bottom:1px;">🔍 Filter</button>
     <a href="{{ url_for('admin.results') }}" class="btn btn-secondary btn-sm" style="margin-bottom:1px;">✕ Reset</a>
@@ -59,8 +59,8 @@
     <table>
       <thead>
         <tr>
-          <th>#</th><th>Layanan</th><th>Plan</th><th>Negara</th><th>Email/Profil</th>
-          <th>Kualitas</th><th>Max Layar</th><th>Next Billing</th><th>Dicek</th><th>Aksi</th>
+          <th>#</th><th>Service</th><th>Plan</th><th>Country</th><th>Email/Profile</th>
+          <th>Quality</th><th>Max Screens</th><th>Next Billing</th><th>Checked</th><th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -79,14 +79,14 @@
           <td>
             <div class="flex gap-2">
               <a href="{{ url_for('user.cookie_detail', cookie_id=c.id) }}" class="btn btn-cyan btn-xs">👁️</a>
-              <form method="POST" action="{{ url_for('admin.delete_cookie', cookie_id=c.id) }}" style="display:inline;" onsubmit="return confirm('Hapus cookie ini?')">
+              <form method="POST" action="{{ url_for('admin.delete_cookie', cookie_id=c.id) }}" style="display:inline;" onsubmit="return confirm('Delete this cookie?')">
                 <button class="btn btn-danger btn-xs">🗑️</button>
               </form>
             </div>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:40px;">Tidak ada data cookies.</td></tr>
+        <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:40px;">No cookies data available.</td></tr>
         {% endfor %}
       </tbody>
     </table>

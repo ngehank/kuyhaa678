@@ -59,11 +59,11 @@ def create_app():
     @app.errorhandler(413)
     def too_large(e):
         from flask import flash
-        flash('File terlalu besar! Maksimal 500MB per upload.', 'danger')
+        flash('File too large! Maximum 500MB per upload.', 'danger')
         return redirect(url_for('admin.check'))
 
     @app.errorhandler(404)
     def not_found(e):
-        return render_template_string('<h2 style="font-family:sans-serif;padding:40px">404 — Halaman tidak ditemukan. <a href="/">Kembali</a></h2>'), 404
+        return render_template_string('<h2 style="font-family:sans-serif;padding:40px">404 — Page not found. <a href="/">Go back</a></h2>'), 404
 
     return app

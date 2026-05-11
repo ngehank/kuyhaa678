@@ -4,10 +4,10 @@
 <div class="page-header">
   <div class="flex-between">
     <div>
-      <h2 class="page-title">📊 Dashboard Admin</h2>
-      <p class="page-subtitle">Overview sistem cookies Netflix</p>
+      <h2 class="page-title">📊 Admin Dashboard</h2>
+      <p class="page-subtitle">Account Cookies System Overview</p>
     </div>
-    <a href="{{ url_for('admin.check') }}" class="btn btn-primary">🔍 Check Cookies Baru</a>
+    <a href="{{ url_for('admin.check') }}" class="btn btn-primary">🔍 Check New Cookies</a>
   </div>
 </div>
 
@@ -16,7 +16,7 @@
   <div class="stat-card red">
     <div class="icon-bg">🍪</div>
     <div class="number text-red">{{ total }}</div>
-    <div class="label">Total Cookies</div>
+    <div class="label">Total Accounts</div>
   </div>
   <div class="stat-card cyan">
     <div class="icon-bg">👥</div>
@@ -31,7 +31,7 @@
   <div class="stat-card green">
     <div class="icon-bg">🌍</div>
     <div class="number text-success">{{ country_stats|length }}</div>
-    <div class="label">Negara Tersedia</div>
+    <div class="label">Available Countries</div>
   </div>
 </div>
 
@@ -54,13 +54,13 @@
       </div>
     </div>
     {% else %}
-    <p class="text-muted" style="font-size:14px;">Belum ada data cookies.</p>
+    <p class="text-muted" style="font-size:14px;">No accounts data available.</p>
     {% endfor %}
   </div>
 
   <!-- COUNTRY TOP -->
   <div class="card">
-    <div class="card-title">🌍 Top Negara</div>
+    <div class="card-title">🌍 Top Countries</div>
     {% set flags = {'US':'🇺🇸','ID':'🇮🇩','JP':'🇯🇵','KR':'🇰🇷','GB':'🇬🇧','DE':'🇩🇪','FR':'🇫🇷','BR':'🇧🇷','IN':'🇮🇳','AU':'🇦🇺','CA':'🇨🇦','SG':'🇸🇬','MY':'🇲🇾','TH':'🇹🇭','PH':'🇵🇭'} %}
     {% for row in country_stats %}
     <div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;">
@@ -68,15 +68,15 @@
       <span class="badge badge-premium">{{ row.count }}</span>
     </div>
     {% else %}
-    <p class="text-muted" style="font-size:14px;">Belum ada data.</p>
+    <p class="text-muted" style="font-size:14px;">No data available.</p>
     {% endfor %}
   </div>
 </div>
 
 {% if pending_users > 0 %}
 <div class="alert alert-warning mt-3">
-  ⚠️ Ada <strong>{{ pending_users }}</strong> user menunggu persetujuan.
-  <a href="{{ url_for('admin.users') }}" style="color:var(--warning);font-weight:700;">Kelola sekarang →</a>
+  ⚠️ There are <strong>{{ pending_users }}</strong> users pending approval.
+  <a href="{{ url_for('admin.users') }}" style="color:var(--warning);font-weight:700;">Manage now →</a>
 </div>
 {% endif %}
 {% endblock %}

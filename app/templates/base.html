@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,61 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+
+<!-- FREE PALESTINE BANNER -->
+<div id="palestine-banner" style="
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: linear-gradient(90deg, #000 25%, #009736 25%, #009736 50%, #fff 50%, #fff 75%, #ce1126 75%);
+  padding: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  cursor: pointer;
+  overflow: hidden;
+">
+  <!-- Animated shimmer -->
+  <div style="
+    position:absolute;top:0;left:-100%;width:60%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+    animation: shimmer-pal 3s infinite;
+  "></div>
+
+  <span style="
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 0 0 12px rgba(0,0,0,0.8), 1px 1px 0 #000;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+  ">
+    <span style="font-size:18px;animation:pulse-pal 1.5s infinite;">🇵🇸</span>
+    &nbsp;Free Palestine&nbsp;
+    <span style="font-size:18px;animation:pulse-pal 1.5s infinite 0.75s;">🇵🇸</span>
+  </span>
+
+
+</div>
+
+<style>
+@keyframes shimmer-pal {
+  0%   { left: -100%; }
+  100% { left: 200%; }
+}
+@keyframes pulse-pal {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.25); }
+}
+/* Push layout down to avoid banner overlap */
+.layout { margin-top: 36px; }
+</style>
 <div class="layout">
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -31,12 +86,12 @@
         <span class="icon">🗄️</span> Database
       </a>
       <a href="{{ url_for('admin.users') }}" class="nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}">
-        <span class="icon">👥</span> Kelola User
+        <span class="icon">👥</span> Manage Users
       </a>
     </div>
     {% else %}
     <div class="nav-section">
-      <div class="nav-label">Layanan</div>
+      <div class="nav-label">Services</div>
       <a href="{{ url_for('user.dashboard', service='netflix') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service', 'netflix') == 'netflix' %}active{% endif %}">
         <span class="icon">🔴</span> Netflix
       </a>

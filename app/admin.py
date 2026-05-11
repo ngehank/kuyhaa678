@@ -29,7 +29,7 @@ def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if not current_user.is_authenticated or not current_user.is_admin:
-            flash('Akses ditolak. Hanya admin yang bisa mengakses halaman ini.', 'danger')
+            flash('Access denied. Admins only.', 'danger')
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated
@@ -267,32 +267,32 @@ def check():
         if upload_mode == 'zip':
             zip_file = request.files.get('zip_file')
             if not zip_file or zip_file.filename == '':
-                flash('Pilih file ZIP terlebih dahulu.', 'danger')
+                flash('Please select a ZIP file first.', 'danger')
                 return redirect(url_for('admin.check'))
             file_contents = _collect_from_zip(zip_file)
             if not file_contents:
-                flash('ZIP tidak mengandung file cookie yang valid (.txt/.json).', 'danger')
+                flash('ZIP does not contain valid cookie files (.txt/.json).', 'danger')
                 return redirect(url_for('admin.check'))
 
         elif upload_mode == 'folder':
             folder_path = request.form.get('folder_path', '').strip()
             if not folder_path:
-                flash('Masukkan path folder.', 'danger')
+                flash('Please enter a folder path.', 'danger')
                 return redirect(url_for('admin.check'))
             file_contents = _collect_from_folder(folder_path)
             if not file_contents:
-                flash(f'Folder tidak ditemukan atau kosong: {folder_path}', 'danger')
+                flash(f'Folder not found or is empty: {folder_path}', 'danger')
                 return redirect(url_for('admin.check'))
 
         else:  # files
             files = request.files.getlist('cookies')
             if not files or all(f.filename == '' for f in files):
-                flash('Pilih minimal 1 file cookie.', 'danger')
+                flash('Please select at least 1 cookie file.', 'danger')
                 return redirect(url_for('admin.check'))
             file_contents = _collect_from_files(files)
 
         if not file_contents:
-            flash('Tidak ada file cookie yang valid ditemukan.', 'danger')
+            flash('No valid cookie files found.', 'danger')
             return redirect(url_for('admin.check'))
 
         # Kosongkan queue lama
@@ -414,7 +414,7 @@ def delete_cookie(cookie_id):
     cookie = CookieResult.query.get_or_404(cookie_id)
     db.session.delete(cookie)
     db.session.commit()
-    flash('Cookie berhasil dihapus.', 'success')
+    flash('Cookie deleted successfully.', 'success')
     return redirect(request.referrer or url_for('admin.results'))
 
 
@@ -434,7 +434,7 @@ def delete_expired():
             except Exception:
                 pass
     db.session.commit()
-    flash(f'{deleted} cookies expired dihapus dari database.', 'success')
+    flash(f'{deleted} expired cookies deleted from database.', 'success')
     return redirect(url_for('admin.results'))
 
 
@@ -445,10 +445,10 @@ def delete_all():
     try:
         CookieResult.query.delete()
         db.session.commit()
-        flash('Semua data cookies berhasil dikosongkan.', 'success')
+        flash('All cookie data has been cleared.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Gagal menghapus data: {e}', 'danger')
+        flash(f'Failed to delete data: {e}', 'danger')
     return redirect(url_for('admin.results'))
 
 
@@ -467,7 +467,7 @@ def approve_user(user_id):
     user = User.query.get_or_404(user_id)
     user.is_approved = True
     db.session.commit()
-    flash(f'User "{user.username}" telah disetujui.', 'success')
+    flash(f'User "{user.username}" has been approved.', 'success')
     return redirect(url_for('admin.users'))
 
 
@@ -478,7 +478,7 @@ def reject_user(user_id):
     user = User.query.get_or_404(user_id)
     db.session.delete(user)
     db.session.commit()
-    flash('User telah dihapus.', 'info')
+    flash('User has been deleted.', 'info')
     return redirect(url_for('admin.users'))
 
 

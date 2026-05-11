@@ -2,12 +2,15 @@
 {% block title %}Dashboard — NF Manager{% endblock %}
 {% block content %}
 <div class="page-header">
-  <h2 class="page-title">🏠 Selamat Datang, {{ current_user.username }}!</h2>
-  <p class="page-subtitle">{{ total }} cookies tersedia — Pilih plan atau negara yang kamu inginkan</p>
+  <h2 class="page-title">🏠 Welcome back, {{ current_user.username }}!</h2>
+  <p class="page-subtitle">
+    {% if current_service == 'netflix' %}🔴 Netflix{% else %}🔵 Prime Video{% endif %}
+    &mdash; <strong>{{ total }}</strong> accounts available &mdash; Select a plan or country below
+  </p>
 </div>
 
 <!-- PLAN CARDS -->
-<div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">📦 Pilih Berdasarkan Plan</div>
+<div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">📦 Filter by Plan <span style="font-size:13px;font-weight:400;color:var(--muted);">— Click a plan to see available countries</span></div>
 <div class="grid-auto mb-4">
   {% for p in plans %}
   <a href="{{ url_for('user.plan_view', plan_key=p.key, service=current_service) }}" class="plan-card" style="border-color:{{ p.color }}22;">
@@ -16,24 +19,24 @@
     <div class="plan-name">{{ p.label }}</div>
     <div class="plan-desc">{{ p.desc }}</div>
     <div class="plan-count" style="color:{{ p.color }};">{{ p.count }}</div>
-    <div style="font-size:11px;color:var(--muted);">cookies tersedia</div>
+    <div style="font-size:11px;color:var(--muted);">accounts available</div>
   </a>
   {% else %}
-  <div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px;">Belum ada cookies tersedia.</div>
+  <div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px;">📦 No accounts available yet.</div>
   {% endfor %}
 </div>
 
 <!-- COUNTRY GRID -->
-<div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">🌍 Pilih Berdasarkan Negara</div>
+<div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">🌍 Filter by Country <span style="font-size:13px;font-weight:400;color:var(--muted);">— Click a country to browse accounts</span></div>
 <div class="grid-auto">
   {% for c in countries %}
   <a href="{{ url_for('user.country_view', country_code=c.code, service=current_service) }}" class="country-card">
     <div class="flag">{{ c.flag }}</div>
-    <div class="code">{{ c.code }}</div>
-    <div class="count">{{ c.count }} cookies</div>
+    <div class="code" style="font-size:13px;font-weight:700;margin-top:4px;">{{ c.name }}</div>
+    <div class="count" style="font-size:11px;color:var(--muted);margin-top:2px;">{{ c.count }} accounts</div>
   </a>
   {% else %}
-  <div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px;">Belum ada data tersedia.</div>
+  <div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px;">🌍 No data available.</div>
   {% endfor %}
 </div>
 {% endblock %}

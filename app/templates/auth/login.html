@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,15 +25,15 @@
     <form method="POST" action="{{ url_for('auth.login') }}">
       <div class="form-group">
         <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" placeholder="Masukkan username" required autofocus>
+        <input type="text" name="username" class="form-control" placeholder="Enter your username" required autofocus>
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" placeholder="Masukkan password" required>
+        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
       </div>
       <div class="form-group" style="display:flex;align-items:center;gap:8px;">
         <input type="checkbox" name="remember" id="remember" style="accent-color:var(--red);">
-        <label for="remember" style="font-size:13px;color:var(--muted);">Ingat Saya</label>
+        <label for="remember" style="font-size:13px;color:var(--muted);">Remember Me</label>
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
         🔑 Login
@@ -42,7 +42,7 @@
 
     <div class="divider"></div>
     <p style="text-align:center;font-size:13px;color:var(--muted);">
-      Belum punya akun? <a href="{{ url_for('auth.register') }}" style="color:var(--cyan);">Daftar sekarang</a>
+      Don't have an account? <a href="{{ url_for('auth.register') }}" style="color:var(--cyan);">Register now</a>
     </p>
   </div>
 </div>

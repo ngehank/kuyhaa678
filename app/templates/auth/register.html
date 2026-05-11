@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +13,7 @@
   <div class="auth-card">
     <div class="auth-logo">
       <h1>🎬 NF Manager</h1>
-      <p>Buat akun baru</p>
+      <p>Create a new account</p>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -25,7 +25,7 @@
     <form method="POST" action="{{ url_for('auth.register') }}">
       <div class="form-group">
         <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" placeholder="Min 3 karakter" required>
+        <input type="text" name="username" class="form-control" placeholder="Min 3 characters" required>
       </div>
       <div class="form-group">
         <label class="form-label">Email</label>
@@ -33,23 +33,23 @@
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" placeholder="Min 6 karakter" required>
+        <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required>
       </div>
       <div class="form-group">
-        <label class="form-label">Konfirmasi Password</label>
-        <input type="password" name="confirm_password" class="form-control" placeholder="Ulangi password" required>
+        <label class="form-label">Confirm Password</label>
+        <input type="password" name="confirm_password" class="form-control" placeholder="Repeat your password" required>
       </div>
       <div class="alert alert-warning" style="font-size:12px;">
-        ⚠️ Akun Anda perlu disetujui admin sebelum bisa login.
+        ⚠️ Your account requires admin approval before you can log in.
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
-        📝 Daftar
+        📝 Register
       </button>
     </form>
 
     <div class="divider"></div>
     <p style="text-align:center;font-size:13px;color:var(--muted);">
-      Sudah punya akun? <a href="{{ url_for('auth.login') }}" style="color:var(--cyan);">Login di sini</a>
+      Already have an account? <a href="{{ url_for('auth.login') }}" style="color:var(--cyan);">Login here</a>
     </p>
   </div>
 </div>

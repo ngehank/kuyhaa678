@@ -16,7 +16,7 @@ def user_approved_required(f):
         if current_user.is_admin:
             return redirect(url_for('admin.dashboard'))
         if not current_user.is_approved:
-            flash('Akun Anda belum disetujui admin.', 'warning')
+            flash('Your account has not been approved yet.', 'warning')
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated
@@ -24,29 +24,182 @@ def user_approved_required(f):
 
 # Plan display config
 PLAN_META = {
-    'premium': {'label': 'Premium', 'icon': '👑', 'color': '#E50914', 'desc': 'Ultra HD · 4 Layar'},
-    'standard_with_ads': {'label': 'Standard + Ads', 'icon': '📺', 'color': '#F5A623', 'desc': 'HD · 2 Layar + Iklan'},
-    'standard': {'label': 'Standard', 'icon': '⭐', 'color': '#2196F3', 'desc': 'HD · 2 Layar'},
-    'basic': {'label': 'Basic', 'icon': '📱', 'color': '#4CAF50', 'desc': 'SD · 1 Layar'},
+    'premium': {'label': 'Premium', 'icon': '👑', 'color': '#E50914', 'desc': 'Ultra HD · 4 Screens'},
+    'standard_with_ads': {'label': 'Standard + Ads', 'icon': '📺', 'color': '#F5A623', 'desc': 'HD · 2 Screens + Ads'},
+    'standard': {'label': 'Standard', 'icon': '⭐', 'color': '#2196F3', 'desc': 'HD · 2 Screens'},
+    'basic': {'label': 'Basic', 'icon': '📱', 'color': '#4CAF50', 'desc': 'SD · 1 Screen'},
     'mobile': {'label': 'Mobile', 'icon': '📲', 'color': '#9C27B0', 'desc': 'Mobile Only'},
-    'free': {'label': 'Free', 'icon': '🆓', 'color': '#607D8B', 'desc': 'Tanpa Langganan'},
+    'free': {'label': 'Free', 'icon': '🆓', 'color': '#607D8B', 'desc': 'No Subscription'},
     'extra_member_premium': {'label': 'Extra Member', 'icon': '➕', 'color': '#FF5722', 'desc': 'Extra Member Premium'},
 }
 
-COUNTRY_FLAGS = {
-    'US': '🇺🇸', 'ID': '🇮🇩', 'JP': '🇯🇵', 'KR': '🇰🇷', 'GB': '🇬🇧',
-    'DE': '🇩🇪', 'FR': '🇫🇷', 'BR': '🇧🇷', 'IN': '🇮🇳', 'AU': '🇦🇺',
-    'CA': '🇨🇦', 'MX': '🇲🇽', 'ES': '🇪🇸', 'IT': '🇮🇹', 'NL': '🇳🇱',
-    'SE': '🇸🇪', 'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮', 'PL': '🇵🇱',
-    'RU': '🇷🇺', 'TR': '🇹🇷', 'SA': '🇸🇦', 'AE': '🇦🇪', 'SG': '🇸🇬',
-    'MY': '🇲🇾', 'TH': '🇹🇭', 'PH': '🇵🇭', 'VN': '🇻🇳', 'HK': '🇭🇰',
-    'TW': '🇹🇼', 'CN': '🇨🇳', 'AR': '🇦🇷', 'CL': '🇨🇱', 'CO': '🇨🇴',
-    'PE': '🇵🇪', 'NG': '🇳🇬', 'ZA': '🇿🇦', 'EG': '🇪🇬', 'PK': '🇵🇰',
+# Comprehensive country data: code -> (flag_emoji, full_english_name)
+COUNTRY_DATA = {
+    # Americas
+    'US': ('🇺🇸', 'United States'),
+    'CA': ('🇨🇦', 'Canada'),
+    'MX': ('🇲🇽', 'Mexico'),
+    'BR': ('🇧🇷', 'Brazil'),
+    'AR': ('🇦🇷', 'Argentina'),
+    'CL': ('🇨🇱', 'Chile'),
+    'CO': ('🇨🇴', 'Colombia'),
+    'PE': ('🇵🇪', 'Peru'),
+    'VE': ('🇻🇪', 'Venezuela'),
+    'EC': ('🇪🇨', 'Ecuador'),
+    'BO': ('🇧🇴', 'Bolivia'),
+    'PY': ('🇵🇾', 'Paraguay'),
+    'UY': ('🇺🇾', 'Uruguay'),
+    'DO': ('🇩🇴', 'Dominican Republic'),
+    'GT': ('🇬🇹', 'Guatemala'),
+    'HN': ('🇭🇳', 'Honduras'),
+    'SV': ('🇸🇻', 'El Salvador'),
+    'NI': ('🇳🇮', 'Nicaragua'),
+    'CR': ('🇨🇷', 'Costa Rica'),
+    'PA': ('🇵🇦', 'Panama'),
+    'JM': ('🇯🇲', 'Jamaica'),
+    'TT': ('🇹🇹', 'Trinidad and Tobago'),
+    'CU': ('🇨🇺', 'Cuba'),
+    'HT': ('🇭🇹', 'Haiti'),
+    'BB': ('🇧🇧', 'Barbados'),
+    'GY': ('🇬🇾', 'Guyana'),
+    'SR': ('🇸🇷', 'Suriname'),
+    # Europe
+    'GB': ('🇬🇧', 'United Kingdom'),
+    'DE': ('🇩🇪', 'Germany'),
+    'FR': ('🇫🇷', 'France'),
+    'IT': ('🇮🇹', 'Italy'),
+    'ES': ('🇪🇸', 'Spain'),
+    'NL': ('🇳🇱', 'Netherlands'),
+    'BE': ('🇧🇪', 'Belgium'),
+    'SE': ('🇸🇪', 'Sweden'),
+    'NO': ('🇳🇴', 'Norway'),
+    'DK': ('🇩🇰', 'Denmark'),
+    'FI': ('🇫🇮', 'Finland'),
+    'PL': ('🇵🇱', 'Poland'),
+    'PT': ('🇵🇹', 'Portugal'),
+    'GR': ('🇬🇷', 'Greece'),
+    'AT': ('🇦🇹', 'Austria'),
+    'CH': ('🇨🇭', 'Switzerland'),
+    'IE': ('🇮🇪', 'Ireland'),
+    'CZ': ('🇨🇿', 'Czech Republic'),
+    'HU': ('🇭🇺', 'Hungary'),
+    'RO': ('🇷🇴', 'Romania'),
+    'BG': ('🇧🇬', 'Bulgaria'),
+    'SK': ('🇸🇰', 'Slovakia'),
+    'SI': ('🇸🇮', 'Slovenia'),
+    'HR': ('🇭🇷', 'Croatia'),
+    'RS': ('🇷🇸', 'Serbia'),
+    'UA': ('🇺🇦', 'Ukraine'),
+    'RU': ('🇷🇺', 'Russia'),
+    'AL': ('🇦🇱', 'Albania'),
+    'MK': ('🇲🇰', 'North Macedonia'),
+    'LT': ('🇱🇹', 'Lithuania'),
+    'LV': ('🇱🇻', 'Latvia'),
+    'EE': ('🇪🇪', 'Estonia'),
+    'LU': ('🇱🇺', 'Luxembourg'),
+    'MT': ('🇲🇹', 'Malta'),
+    'IS': ('🇮🇸', 'Iceland'),
+    'BY': ('🇧🇾', 'Belarus'),
+    'MD': ('🇲🇩', 'Moldova'),
+    'BA': ('🇧🇦', 'Bosnia and Herzegovina'),
+    'ME': ('🇲🇪', 'Montenegro'),
+    'XK': ('🇽🇰', 'Kosovo'),
+    'CY': ('🇨🇾', 'Cyprus'),
+    # Asia and Pacific
+    'CN': ('🇨🇳', 'China'),
+    'JP': ('🇯🇵', 'Japan'),
+    'KR': ('🇰🇷', 'South Korea'),
+    'IN': ('🇮🇳', 'India'),
+    'ID': ('🇮🇩', 'Indonesia'),
+    'PH': ('🇵🇭', 'Philippines'),
+    'VN': ('🇻🇳', 'Vietnam'),
+    'TH': ('🇹🇭', 'Thailand'),
+    'MY': ('🇲🇾', 'Malaysia'),
+    'SG': ('🇸🇬', 'Singapore'),
+    'HK': ('🇭🇰', 'Hong Kong'),
+    'TW': ('🇹🇼', 'Taiwan'),
+    'AU': ('🇦🇺', 'Australia'),
+    'NZ': ('🇳🇿', 'New Zealand'),
+    'PK': ('🇵🇰', 'Pakistan'),
+    'BD': ('🇧🇩', 'Bangladesh'),
+    'LK': ('🇱🇰', 'Sri Lanka'),
+    'NP': ('🇳🇵', 'Nepal'),
+    'MM': ('🇲🇲', 'Myanmar'),
+    'KH': ('🇰🇭', 'Cambodia'),
+    'MN': ('🇲🇳', 'Mongolia'),
+    'BN': ('🇧🇳', 'Brunei'),
+    'FJ': ('🇫🇯', 'Fiji'),
+    'PG': ('🇵🇬', 'Papua New Guinea'),
+    'AF': ('🇦🇫', 'Afghanistan'),
+    'GE': ('🇬🇪', 'Georgia'),
+    'AM': ('🇦🇲', 'Armenia'),
+    'AZ': ('🇦🇿', 'Azerbaijan'),
+    'KZ': ('🇰🇿', 'Kazakhstan'),
+    'UZ': ('🇺🇿', 'Uzbekistan'),
+    # Middle East
+    'SA': ('🇸🇦', 'Saudi Arabia'),
+    'AE': ('🇦🇪', 'United Arab Emirates'),
+    'QA': ('🇶🇦', 'Qatar'),
+    'KW': ('🇰🇼', 'Kuwait'),
+    'BH': ('🇧🇭', 'Bahrain'),
+    'OM': ('🇴🇲', 'Oman'),
+    'JO': ('🇯🇴', 'Jordan'),
+    'LB': ('🇱🇧', 'Lebanon'),
+    'IQ': ('🇮🇶', 'Iraq'),
+    'IR': ('🇮🇷', 'Iran'),
+    'IL': ('🇮🇱', 'Israel'),
+    'TR': ('🇹🇷', 'Turkey'),
+    'SY': ('🇸🇾', 'Syria'),
+    'YE': ('🇾🇪', 'Yemen'),
+    # Africa
+    'ZA': ('🇿🇦', 'South Africa'),
+    'NG': ('🇳🇬', 'Nigeria'),
+    'EG': ('🇪🇬', 'Egypt'),
+    'KE': ('🇰🇪', 'Kenya'),
+    'ET': ('🇪🇹', 'Ethiopia'),
+    'GH': ('🇬🇭', 'Ghana'),
+    'MA': ('🇲🇦', 'Morocco'),
+    'DZ': ('🇩🇿', 'Algeria'),
+    'TN': ('🇹🇳', 'Tunisia'),
+    'CI': ('🇨🇮', 'Ivory Coast'),
+    'TZ': ('🇹🇿', 'Tanzania'),
+    'CM': ('🇨🇲', 'Cameroon'),
+    'AO': ('🇦🇴', 'Angola'),
+    'MZ': ('🇲🇿', 'Mozambique'),
+    'ZM': ('🇿🇲', 'Zambia'),
+    'ZW': ('🇿🇼', 'Zimbabwe'),
+    'SN': ('🇸🇳', 'Senegal'),
+    'TG': ('🇹🇬', 'Togo'),
+    'BF': ('🇧🇫', 'Burkina Faso'),
+    'ML': ('🇲🇱', 'Mali'),
+    'MG': ('🇲🇬', 'Madagascar'),
+    'BW': ('🇧🇼', 'Botswana'),
+    'NA': ('🇳🇦', 'Namibia'),
+    'RW': ('🇷🇼', 'Rwanda'),
+    'UG': ('🇺🇬', 'Uganda'),
+    'SD': ('🇸🇩', 'Sudan'),
+    'GA': ('🇬🇦', 'Gabon'),
+    'CD': ('🇨🇩', 'DR Congo'),
+    'SC': ('🇸🇨', 'Seychelles'),
+    'TD': ('🇹🇩', 'Chad'),
+    'LY': ('🇱🇾', 'Libya'),
+    'MU': ('🇲🇺', 'Mauritius'),
+    'CV': ('🇨🇻', 'Cape Verde'),
+    'YT': ('🇾🇹', 'Mayotte'),
+    'MW': ('🇲🇼', 'Malawi'),
+    'BI': ('🇧🇮', 'Burundi'),
+    'SO': ('🇸🇴', 'Somalia'),
 }
 
 
 def get_flag(country_code):
-    return COUNTRY_FLAGS.get((country_code or '').upper(), '🌍')
+    code = (country_code or '').upper()
+    return COUNTRY_DATA.get(code, ('🌍', code))[0]
+
+
+def get_country_name(country_code):
+    code = (country_code or '').upper()
+    return COUNTRY_DATA.get(code, ('🌍', code))[1]
 
 
 @user_bp.route('/')
@@ -83,7 +236,7 @@ def dashboard():
         func.count(CookieResult.id).label('count')
     ).filter(CookieResult.service_type == service).group_by(CookieResult.country).order_by(func.count(CookieResult.id).desc()).all()
 
-    countries = [{'code': r.country, 'flag': get_flag(r.country), 'count': r.count}
+    countries = [{'code': r.country, 'flag': get_flag(r.country), 'name': get_country_name(r.country), 'count': r.count}
                  for r in country_data]
 
     total = CookieResult.query.filter(CookieResult.service_type == service).count()
@@ -105,7 +258,7 @@ def plan_view(plan_key):
         func.count(CookieResult.id).desc()
     ).all()
 
-    countries = [{'code': r.country, 'flag': get_flag(r.country), 'count': r.count}
+    countries = [{'code': r.country, 'flag': get_flag(r.country), 'name': get_country_name(r.country), 'count': r.count}
                  for r in country_data]
 
     return render_template('user/plan.html', plan_key=plan_key, plan_meta=plan_meta, countries=countries, current_service=service)
@@ -131,8 +284,10 @@ def country_view(country_code):
     ).filter(CookieResult.country == country_code.upper(), CookieResult.service_type == service).distinct().all()
 
     flag = get_flag(country_code)
+    country_name = get_country_name(country_code)
     return render_template('user/country.html',
                            country_code=country_code.upper(),
+                           country_name=country_name,
                            flag=flag,
                            pagination=pagination,
                            plans_in_country=plans_in_country,
@@ -148,8 +303,9 @@ def cookie_detail(cookie_id):
     """Halaman detail cookie — tampilkan info akun."""
     cookie = CookieResult.query.get_or_404(cookie_id)
     flag = get_flag(cookie.country)
+    country_name = get_country_name(cookie.country)
     plan_meta = PLAN_META.get(cookie.plan_key, {'label': cookie.plan_name, 'icon': '📦', 'color': '#607D8B'})
-    return render_template('user/cookie_detail.html', cookie=cookie, flag=flag, plan_meta=plan_meta)
+    return render_template('user/cookie_detail.html', cookie=cookie, flag=flag, plan_meta=plan_meta, country_name=country_name)
 
 
 @user_bp.route('/get-token/<int:cookie_id>', methods=['POST'])
