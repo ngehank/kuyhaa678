@@ -19,6 +19,7 @@ class CookieResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # Cookie raw data
+    service_type = db.Column(db.String(20), default='netflix', index=True)
     filename = db.Column(db.String(255))
     cookie_text = db.Column(db.Text, nullable=False)
 

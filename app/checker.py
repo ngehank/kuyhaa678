@@ -28,7 +28,34 @@ try:
     CHECKER_AVAILABLE = True
 except ImportError as e:
     CHECKER_AVAILABLE = False
-    print(f"[WARNING] Could not import checker: {e}")
+    print(f"[WARNING] Could not import netflix checker: {e}")
+
+try:
+    from .prime_checker_main import (
+        parse_cookie_file,
+        has_required_auth_cookies,
+        get_prime_video_data,
+        infer_prime_video_data,
+        classify_non_success_result,
+        set_unknown_plan_data,
+    )
+    PRIME_CHECKER_AVAILABLE = True
+except ImportError as e:
+    PRIME_CHECKER_AVAILABLE = False
+    print(f"[WARNING] Could not import prime checker: {e}")
+
+# Global state for cancelling
+checker_state = {'cancel': False}
+
+def cancel_checking():
+    checker_state['cancel'] = True
+
+def is_cancelled():
+    return checker_state['cancel']
+
+def reset_checker_state():
+    checker_state['cancel'] = False
+
 
 
 def check_single_cookie(cookie_text: str, proxy_list: list = None) -> dict:
@@ -41,6 +68,9 @@ def check_single_cookie(cookie_text: str, proxy_list: list = None) -> dict:
       cookie_text: normalized netscape text
       error_reason: str (jika gagal)
     """
+    if is_cancelled():
+        return {'status': 'cancelled'}
+
     if not CHECKER_AVAILABLE:
         return {'status': 'error', 'error_reason': 'Checker module not available'}
 
@@ -55,6 +85,8 @@ def check_single_cookie(cookie_text: str, proxy_list: list = None) -> dict:
 
         if not cookies or not has_required_netflix_cookies(cookies):
             return {'status': 'failed', 'error_reason': 'Missing required cookie: NetflixId'}
+
+        if is_cancelled(): return {'status': 'cancelled'}
 
         # Setup session
         session = requests.Session()
@@ -81,6 +113,8 @@ def check_single_cookie(cookie_text: str, proxy_list: list = None) -> dict:
             timeout=20,
             verify=False,
         )
+
+        if is_cancelled(): return {'status': 'cancelled'}
 
         if response.status_code != 200:
             return {
@@ -117,6 +151,78 @@ def check_single_cookie(cookie_text: str, proxy_list: list = None) -> dict:
             'profiles': decode_netflix_value(info.get('profiles')),
             'hold_status': decode_netflix_value(info.get('holdStatus')),
             'membership_status': decode_netflix_value(info.get('membershipStatus')),
+        }
+
+    except requests.exceptions.Timeout:
+        return {'status': 'error', 'error_reason': 'Timeout'}
+    except requests.exceptions.ProxyError:
+        return {'status': 'error', 'error_reason': 'Proxy error'}
+    except requests.exceptions.RequestException as e:
+        return {'status': 'error', 'error_reason': str(e)}
+    except Exception as e:
+        return {'status': 'error', 'error_reason': str(e)}
+
+
+def check_single_prime_cookie(cookie_text: str, proxy_list: list = None) -> dict:
+    if is_cancelled():
+        return {'status': 'cancelled'}
+
+    if not PRIME_CHECKER_AVAILABLE:
+        return {'status': 'error', 'error_reason': 'Prime Checker module not available'}
+
+    try:
+        import tempfile
+        import json
+        with tempfile.NamedTemporaryFile(delete=False, mode='w', suffix='.txt', encoding='utf-8') as tf:
+            tf.write(cookie_text)
+            temp_path = tf.name
+
+        netscape_text, cookies = parse_cookie_file(temp_path)
+        os.remove(temp_path)
+
+        if not cookies or not has_required_auth_cookies(cookies):
+            return {'status': 'failed', 'error_reason': 'Missing required Prime Video cookies'}
+
+        if is_cancelled(): return {'status': 'cancelled'}
+
+        session = requests.Session()
+        session.cookies.update(cookies)
+        
+        proxy_dict = None
+        if proxy_list:
+            import random
+            proxy_dict = random.choice(proxy_list)
+
+        source_text, status_code, config_data = get_prime_video_data(session, proxy_dict)
+        
+        if is_cancelled(): return {'status': 'cancelled'}
+
+        data = infer_prime_video_data(source_text, "", config_data)
+        
+        if data.get('signin_state') != 'signed_in':
+            return {'status': 'failed', 'error_reason': 'Not signed in to Prime Video'}
+
+        is_paid = data.get('is_paid')
+        status = 'success' if is_paid is True else 'free'
+        
+        # prime_checker_main format_paid_label etc handling is internal.
+        # We just need the fields for the database
+        plan_name = data.get('plan', 'Unknown')
+        plan_key = plan_name.lower().replace(' ', '_')
+        if not is_paid:
+            plan_key = 'free'
+        elif is_paid:
+            plan_key = 'premium' # or active
+
+        return {
+            'status': status,
+            'cookie_text': netscape_text,
+            'plan_key': plan_key,
+            'plan_name': plan_name,
+            'country': data.get('region') or 'Unknown',
+            'is_on_hold': False,
+            'account_name': data.get('profile') or '',
+            'email': data.get('customer_id') or '',  # Prime Video often doesn't show email directly
         }
 
     except requests.exceptions.Timeout:

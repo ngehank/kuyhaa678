@@ -7,16 +7,16 @@
       <h2 class="page-title">{{ flag }} {{ country_code }}</h2>
       <p class="page-subtitle">{{ pagination.total }} cookies tersedia dari negara ini</p>
     </div>
-    <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary btn-sm">← Kembali</a>
+    <a href="{{ url_for('user.dashboard', service=current_service) }}" class="btn btn-secondary btn-sm">← Kembali</a>
   </div>
 </div>
 
 <!-- PLAN FILTER -->
 {% if plans_in_country|length > 1 %}
 <div class="flex gap-2 mb-3" style="flex-wrap:wrap;">
-  <a href="{{ url_for('user.country_view', country_code=country_code) }}" class="btn btn-sm {% if not plan_filter %}btn-primary{% else %}btn-secondary{% endif %}">Semua</a>
+  <a href="{{ url_for('user.country_view', country_code=country_code, service=current_service) }}" class="btn btn-sm {% if not plan_filter %}btn-primary{% else %}btn-secondary{% endif %}">Semua</a>
   {% for p in plans_in_country %}
-  <a href="{{ url_for('user.country_view', country_code=country_code, plan=p.plan_key) }}"
+  <a href="{{ url_for('user.country_view', country_code=country_code, plan=p.plan_key, service=current_service) }}"
      class="btn btn-sm {% if plan_filter==p.plan_key %}btn-primary{% else %}btn-secondary{% endif %}">
     {{ plan_meta.get(p.plan_key, {}).get('icon','📦') }} {{ p.plan_name or p.plan_key }}
   </a>
@@ -55,14 +55,14 @@
 {% if pagination.pages > 1 %}
 <div class="pagination">
   {% if pagination.has_prev %}
-  <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.prev_num, plan=plan_filter) }}" class="page-btn">←</a>
+  <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.prev_num, plan=plan_filter, service=current_service) }}" class="page-btn">←</a>
   {% endif %}
   {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-    {% if p %}<a href="{{ url_for('user.country_view', country_code=country_code, page=p, plan=plan_filter) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
+    {% if p %}<a href="{{ url_for('user.country_view', country_code=country_code, page=p, plan=plan_filter, service=current_service) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
     {% else %}<span class="page-btn" style="opacity:0.4;">…</span>{% endif %}
   {% endfor %}
   {% if pagination.has_next %}
-  <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.next_num, plan=plan_filter) }}" class="page-btn">→</a>
+  <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.next_num, plan=plan_filter, service=current_service) }}" class="page-btn">→</a>
   {% endif %}
 </div>
 {% endif %}

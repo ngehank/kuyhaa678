@@ -22,6 +22,14 @@
 <!-- FILTER -->
 <div class="card mb-3">
   <form method="GET" class="flex" style="gap:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div class="form-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="form-label">Filter Layanan</label>
+      <select name="service" class="form-control">
+        <option value="">Semua Layanan</option>
+        <option value="netflix" {% if service_filter=='netflix' %}selected{% endif %}>Netflix</option>
+        <option value="primevideo" {% if service_filter=='primevideo' %}selected{% endif %}>Prime Video</option>
+      </select>
+    </div>
     <div class="form-group" style="margin:0;flex:1;min-width:150px;">
       <label class="form-label">Filter Plan</label>
       <select name="plan" class="form-control">
@@ -51,7 +59,7 @@
     <table>
       <thead>
         <tr>
-          <th>#</th><th>Plan</th><th>Negara</th><th>Email</th>
+          <th>#</th><th>Layanan</th><th>Plan</th><th>Negara</th><th>Email/Profil</th>
           <th>Kualitas</th><th>Max Layar</th><th>Next Billing</th><th>Dicek</th><th>Aksi</th>
         </tr>
       </thead>
@@ -60,9 +68,10 @@
         {% set badge_map = {'premium':'badge-premium','standard':'badge-standard','standard_with_ads':'badge-standard','basic':'badge-basic','mobile':'badge-mobile','free':'badge-free'} %}
         <tr>
           <td style="color:var(--muted);">{{ c.id }}</td>
+          <td><span class="badge" style="background:var(--{{'red' if c.service_type == 'netflix' else 'cyan'}});">{{ c.service_type|upper }}</span></td>
           <td><span class="badge {{ badge_map.get(c.plan_key,'') }}">{{ c.plan_name or c.plan_key }}</span></td>
           <td>🌍 <strong>{{ c.country or '?' }}</strong></td>
-          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.email or '—' }}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.email or c.account_name or '—' }}</td>
           <td>{{ c.quality or '—' }}</td>
           <td>{{ c.max_streams or '—' }}</td>
           <td style="font-size:12px;color:var(--muted);">{{ c.next_billing or '—' }}</td>
@@ -87,14 +96,14 @@
   {% if pagination.pages > 1 %}
   <div class="pagination">
     {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.results', page=pagination.prev_num, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn">←</a>
+    <a href="{{ url_for('admin.results', page=pagination.prev_num, service=service_filter, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn">←</a>
     {% endif %}
     {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-      {% if p %}<a href="{{ url_for('admin.results', page=p, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
+      {% if p %}<a href="{{ url_for('admin.results', page=p, service=service_filter, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
       {% else %}<span class="page-btn" style="opacity:0.4;">…</span>{% endif %}
     {% endfor %}
     {% if pagination.has_next %}
-    <a href="{{ url_for('admin.results', page=pagination.next_num, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn">→</a>
+    <a href="{{ url_for('admin.results', page=pagination.next_num, service=service_filter, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn">→</a>
     {% endif %}
   </div>
   {% endif %}

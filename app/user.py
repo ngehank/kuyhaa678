@@ -53,12 +53,14 @@ def get_flag(country_code):
 @login_required
 @user_approved_required
 def dashboard():
+    service = request.args.get('service', 'netflix')
+    
     # Plan cards with counts
     plan_data = db.session.query(
         CookieResult.plan_key,
         CookieResult.plan_name,
         func.count(CookieResult.id).label('count')
-    ).group_by(CookieResult.plan_key).all()
+    ).filter(CookieResult.service_type == service).group_by(CookieResult.plan_key).all()
 
     plans = []
     for row in plan_data:
@@ -79,13 +81,13 @@ def dashboard():
     country_data = db.session.query(
         CookieResult.country,
         func.count(CookieResult.id).label('count')
-    ).group_by(CookieResult.country).order_by(func.count(CookieResult.id).desc()).all()
+    ).filter(CookieResult.service_type == service).group_by(CookieResult.country).order_by(func.count(CookieResult.id).desc()).all()
 
     countries = [{'code': r.country, 'flag': get_flag(r.country), 'count': r.count}
                  for r in country_data]
 
-    total = CookieResult.query.count()
-    return render_template('user/dashboard.html', plans=plans, countries=countries, total=total)
+    total = CookieResult.query.filter(CookieResult.service_type == service).count()
+    return render_template('user/dashboard.html', plans=plans, countries=countries, total=total, current_service=service)
 
 
 @user_bp.route('/plan/<plan_key>')
@@ -93,19 +95,20 @@ def dashboard():
 @user_approved_required
 def plan_view(plan_key):
     """Lihat semua negara yang tersedia dalam satu plan."""
+    service = request.args.get('service', 'netflix')
     plan_meta = PLAN_META.get(plan_key, {'label': plan_key, 'icon': '📦', 'color': '#607D8B'})
 
     country_data = db.session.query(
         CookieResult.country,
         func.count(CookieResult.id).label('count')
-    ).filter(CookieResult.plan_key == plan_key).group_by(CookieResult.country).order_by(
+    ).filter(CookieResult.plan_key == plan_key, CookieResult.service_type == service).group_by(CookieResult.country).order_by(
         func.count(CookieResult.id).desc()
     ).all()
 
     countries = [{'code': r.country, 'flag': get_flag(r.country), 'count': r.count}
                  for r in country_data]
 
-    return render_template('user/plan.html', plan_key=plan_key, plan_meta=plan_meta, countries=countries)
+    return render_template('user/plan.html', plan_key=plan_key, plan_meta=plan_meta, countries=countries, current_service=service)
 
 
 @user_bp.route('/country/<country_code>')
@@ -113,10 +116,11 @@ def plan_view(plan_key):
 @user_approved_required
 def country_view(country_code):
     """Lihat semua cookies dari suatu negara."""
+    service = request.args.get('service', 'netflix')
     page = request.args.get('page', 1, type=int)
     plan_filter = request.args.get('plan', '')
 
-    query = CookieResult.query.filter(CookieResult.country == country_code.upper())
+    query = CookieResult.query.filter(CookieResult.country == country_code.upper(), CookieResult.service_type == service)
     if plan_filter:
         query = query.filter(CookieResult.plan_key == plan_filter)
 
@@ -124,7 +128,7 @@ def country_view(country_code):
 
     plans_in_country = db.session.query(
         CookieResult.plan_key, CookieResult.plan_name
-    ).filter(CookieResult.country == country_code.upper()).distinct().all()
+    ).filter(CookieResult.country == country_code.upper(), CookieResult.service_type == service).distinct().all()
 
     flag = get_flag(country_code)
     return render_template('user/country.html',
@@ -133,7 +137,8 @@ def country_view(country_code):
                            pagination=pagination,
                            plans_in_country=plans_in_country,
                            plan_filter=plan_filter,
-                           plan_meta=PLAN_META)
+                           plan_meta=PLAN_META,
+                           current_service=service)
 
 
 @user_bp.route('/cookie/<int:cookie_id>')

@@ -3,7 +3,16 @@ from flask_login import login_required, current_user
 from functools import wraps
 from .models import User, CookieResult
 from . import db
-from .checker import check_single_cookie, parse_proxy_text, CHECKER_AVAILABLE
+from .checker import (
+    check_single_cookie, 
+    check_single_prime_cookie,
+    parse_proxy_text, 
+    CHECKER_AVAILABLE,
+    PRIME_CHECKER_AVAILABLE,
+    cancel_checking,
+    reset_checker_state,
+    is_cancelled
+)
 import threading
 import json
 import queue
@@ -80,7 +89,7 @@ def _collect_from_folder(folder_path):
 
 # ─── BACKGROUND WORKER ───────────────────────────────────────────────────────
 
-def _run_check_background(flask_app, file_contents, proxies, threads_count):
+def _run_check_background(flask_app, file_contents, proxies, threads_count, service_type='netflix'):
     """
     Jalankan pengecekan cookies di background thread.
     WAJIB pakai flask_app.app_context() agar bisa akses database.
@@ -99,16 +108,32 @@ def _run_check_background(flask_app, file_contents, proxies, threads_count):
 
         def worker():
             while True:
+                if is_cancelled():
+                    while not task_q.empty():
+                        try:
+                            task_q.get_nowait()
+                            task_q.task_done()
+                        except queue.Empty:
+                            break
+                    break
+
                 try:
                     fname, content = task_q.get_nowait()
                 except queue.Empty:
                     break
                 try:
-                    result = check_single_cookie(content, proxies)
+                    if service_type == 'primevideo':
+                        result = check_single_prime_cookie(content, proxies)
+                    else:
+                        result = check_single_cookie(content, proxies)
                 except Exception as e:
                     result = {'status': 'error', 'error_reason': str(e)}
 
                 with lock:
+                    if result.get('status') == 'cancelled':
+                        task_q.task_done()
+                        continue
+                        
                     results['done'] += 1
                     status = result.get('status', 'error')
                     if status in ('success', 'free'):
@@ -149,6 +174,7 @@ def _run_check_background(flask_app, file_contents, proxies, threads_count):
             for fname, result in db_results:
                 try:
                     entry = CookieResult(
+                        service_type=sanitize(service_type),
                         filename=sanitize(fname),
                         cookie_text=sanitize(result.get('cookie_text', '')),
                         plan_key=sanitize(result.get('plan_key', 'unknown')),
@@ -233,6 +259,7 @@ def check():
     if request.method == 'POST':
         proxy_text = request.form.get('proxies', '')
         threads_count = max(1, min(int(request.form.get('threads', 5) or 5), 30))
+        service_type = request.form.get('service_type', 'netflix')
         proxies = parse_proxy_text(proxy_text) if proxy_text.strip() else []
         upload_mode = request.form.get('upload_mode', 'files')
         file_contents = []
@@ -278,17 +305,28 @@ def check():
         # Ambil app instance SEBELUM spawn thread
         flask_app = current_app._get_current_object()
 
+        # Reset cancel flag sebelum jalan
+        reset_checker_state()
+
         t = threading.Thread(
             target=_run_check_background,
-            args=(flask_app, file_contents, proxies, threads_count),
+            args=(flask_app, file_contents, proxies, threads_count, service_type),
             daemon=True
         )
         t.start()
         return render_template('admin/checking.html',
                                total=len(file_contents),
-                               checker_ok=CHECKER_AVAILABLE)
+                               checker_ok=CHECKER_AVAILABLE,
+                               prime_checker_ok=PRIME_CHECKER_AVAILABLE)
 
-    return render_template('admin/check.html', checker_ok=CHECKER_AVAILABLE)
+    return render_template('admin/check.html', checker_ok=CHECKER_AVAILABLE, prime_checker_ok=PRIME_CHECKER_AVAILABLE)
+
+@admin_bp.route('/cancel-check', methods=['POST'])
+@login_required
+@admin_required
+def cancel_check():
+    cancel_checking()
+    return jsonify({"status": "cancelled", "message": "Proses pengecekan dihentikan."})
 
 
 @admin_bp.route('/progress-stream')
@@ -335,11 +373,14 @@ def debug_checker():
 @admin_required
 def results():
     page = request.args.get('page', 1, type=int)
+    service_filter = request.args.get('service', '')
     plan_filter = request.args.get('plan', '')
     country_filter = request.args.get('country', '')
     search = request.args.get('search', '')
 
     query = CookieResult.query
+    if service_filter:
+        query = query.filter(CookieResult.service_type == service_filter)
     if plan_filter:
         query = query.filter(CookieResult.plan_key == plan_filter)
     if country_filter:
@@ -360,6 +401,7 @@ def results():
                            pagination=pagination,
                            plans=plans,
                            countries=countries,
+                           service_filter=service_filter,
                            plan_filter=plan_filter,
                            country_filter=country_filter,
                            search=search)

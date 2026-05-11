@@ -20,6 +20,17 @@ def create_app():
     app.config['MAX_FORM_MEMORY_SIZE'] = 500 * 1024 * 1024  # 500MB form memory
 
     db.init_app(app)
+    
+    with app.app_context():
+        try:
+            from sqlalchemy import text
+            db.session.execute(text("ALTER TABLE cookie_results ADD COLUMN service_type VARCHAR(20) DEFAULT 'netflix'"))
+            db.session.commit()
+            print("DB Migration: Added service_type column.")
+        except Exception as e:
+            # Column might already exist or table doesn't exist yet
+            db.session.rollback()
+
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Silakan login untuk mengakses halaman ini.'

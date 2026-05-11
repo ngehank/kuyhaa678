@@ -21,11 +21,14 @@
       <span class="info-val">{{ val if val else '—' }}</span>
     </div>
     {% endmacro %}
+    {{ row('Layanan', cookie.service_type|upper) }}
     {{ row('Plan', cookie.plan_name) }}
     {{ row('Negara', flag + ' ' + cookie.country) }}
+    {% if cookie.service_type == 'netflix' %}
     {{ row('Kualitas', cookie.quality) }}
     {{ row('Max Layar', cookie.max_streams) }}
     {{ row('Harga', cookie.plan_price) }}
+    {% endif %}
     {{ row('Next Billing', cookie.next_billing) }}
     {{ row('Member Sejak', cookie.member_since) }}
     {{ row('Metode Bayar', cookie.payment_method) }}
@@ -39,6 +42,33 @@
 
   <!-- TOKEN SECTION -->
   <div>
+    {% if cookie.service_type == 'primevideo' %}
+    <div class="card mb-3">
+      <div class="card-title">🍪 Raw Cookies (Prime Video)</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+        Gunakan ekstensi browser <strong>Cookie-Editor</strong> untuk login menggunakan raw cookies ini.
+      </p>
+      <textarea class="form-control" rows="8" readonly id="rawCookies" style="font-family:monospace;font-size:11px;background:#111;">{{ cookie.cookie_text }}</textarea>
+      <button onclick="copyRawCookies()" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;margin-top:12px;">
+        📋 Copy Raw Cookies
+      </button>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">📖 Cara Login dengan Cookie-Editor</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;">
+        <ol style="padding-left:18px;">
+          <li>Install ekstensi <strong>Cookie-Editor</strong> di browser (Chrome, Firefox, atau Edge).</li>
+          <li>Buka website resmi <strong>primevideo.com</strong>.</li>
+          <li>Klik ikon ekstensi Cookie-Editor di pojok kanan atas browser Anda.</li>
+          <li>Klik tombol <strong>🗑️ (Delete All)</strong> untuk menghapus sesi/cookie lama yang ada.</li>
+          <li>Klik tombol <strong>⬇️ (Import)</strong>, paste text <em>Raw Cookies</em> yang sudah di-copy di atas.</li>
+          <li>Klik tombol <strong>Import</strong> lagi di bawah kotak teks.</li>
+          <li>Refresh halaman primevideo.com, Anda akan otomatis login. Selesai! 🎉</li>
+        </ol>
+      </div>
+    </div>
+    {% else %}
     <div class="card mb-3">
       <div class="card-title">🔑 Generate NFToken</div>
       <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
@@ -82,7 +112,7 @@
         <p style="color:var(--muted);font-size:13px;">Generating token...</p>
       </div>
     </div>
-
+    {% endif %}
 
   </div>
 </div>
@@ -129,6 +159,10 @@ function copyUrl(id) {
   navigator.clipboard.writeText(text).then(() => alert('URL tersalin!'));
 }
 
+function copyRawCookies() {
+  const text = document.getElementById('rawCookies').value;
+  navigator.clipboard.writeText(text).then(() => alert('Raw cookies berhasil disalin!'));
+}
 
 </script>
 {% endblock %}

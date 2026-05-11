@@ -36,9 +36,12 @@
     </div>
     {% else %}
     <div class="nav-section">
-      <div class="nav-label">User</div>
-      <a href="{{ url_for('user.dashboard') }}" class="nav-link {% if request.endpoint == 'user.dashboard' %}active{% endif %}">
-        <span class="icon">🏠</span> Dashboard
+      <div class="nav-label">Layanan</div>
+      <a href="{{ url_for('user.dashboard', service='netflix') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service', 'netflix') == 'netflix' %}active{% endif %}">
+        <span class="icon">🔴</span> Netflix
+      </a>
+      <a href="{{ url_for('user.dashboard', service='primevideo') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'primevideo' %}active{% endif %}">
+        <span class="icon">🔵</span> Prime Video
       </a>
     </div>
     {% endif %}

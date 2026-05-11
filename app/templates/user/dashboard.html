@@ -10,7 +10,7 @@
 <div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">📦 Pilih Berdasarkan Plan</div>
 <div class="grid-auto mb-4">
   {% for p in plans %}
-  <a href="{{ url_for('user.plan_view', plan_key=p.key) }}" class="plan-card" style="border-color:{{ p.color }}22;">
+  <a href="{{ url_for('user.plan_view', plan_key=p.key, service=current_service) }}" class="plan-card" style="border-color:{{ p.color }}22;">
     <div class="glow" style="background:{{ p.color }};"></div>
     <div class="plan-icon">{{ p.icon }}</div>
     <div class="plan-name">{{ p.label }}</div>
@@ -27,7 +27,7 @@
 <div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">🌍 Pilih Berdasarkan Negara</div>
 <div class="grid-auto">
   {% for c in countries %}
-  <a href="{{ url_for('user.country_view', country_code=c.code) }}" class="country-card">
+  <a href="{{ url_for('user.country_view', country_code=c.code, service=current_service) }}" class="country-card">
     <div class="flag">{{ c.flag }}</div>
     <div class="code">{{ c.code }}</div>
     <div class="count">{{ c.count }} cookies</div>

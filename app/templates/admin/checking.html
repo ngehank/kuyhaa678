@@ -19,6 +19,7 @@
     <span>❌ Gagal: <strong id="cntFailed" style="color:var(--danger);">0</strong></span>
     <span>⚠️ Error: <strong id="cntError" style="color:var(--warning);">0</strong></span>
     <span>📊 Total: <strong id="cntTotal" style="color:var(--cyan);">{{ total }}</strong></span>
+    <button onclick="stopChecking()" id="btnStop" class="btn" style="margin-left:auto; padding: 4px 10px; background:var(--danger); color:white; font-size:12px; border:none; border-radius:4px; cursor:pointer;">🛑 Stop Pengecekan</button>
   </div>
 </div>
 
@@ -81,6 +82,21 @@ evtSource.onmessage = function(e) {
 evtSource.onerror = function() {
   evtSource.close();
   document.getElementById('doneSection').style.display = 'block';
+  document.getElementById('btnStop').style.display = 'none';
 };
+
+function stopChecking() {
+  if (confirm("Yakin ingin menghentikan pengecekan?")) {
+    document.getElementById('btnStop').textContent = "Menghentikan...";
+    document.getElementById('btnStop').disabled = true;
+    fetch("{{ url_for('admin.cancel_check') }}", { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        txt.textContent = 'Dihentikan oleh pengguna';
+        document.getElementById('doneSection').style.display = 'block';
+        document.getElementById('btnStop').style.display = 'none';
+      });
+  }
+}
 </script>
 {% endblock %}
