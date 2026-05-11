@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ plan_meta.label }} — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="flex-between">
+    <div>
+      <h2 class="page-title">{{ plan_meta.icon }} {{ plan_meta.label }}</h2>
+      <p class="page-subtitle">Pilih negara untuk melihat cookies tersedia</p>
+    </div>
+    <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary btn-sm">← Kembali</a>
+  </div>
+</div>
+
+{% if countries %}
+<div class="grid-auto">
+  {% for c in countries %}
+  <a href="{{ url_for('user.country_view', country_code=c.code, plan=plan_key) }}" class="country-card">
+    <div class="flag">{{ c.flag }}</div>
+    <div class="code">{{ c.code }}</div>
+    <div class="count">{{ c.count }} cookies</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:60px;">
+  <div style="font-size:48px;">📭</div>
+  <p style="color:var(--muted);margin-top:12px;">Tidak ada cookies untuk plan ini.</p>
+  <a href="{{ url_for('user.dashboard') }}" class="btn btn-primary mt-2">← Kembali</a>
+</div>
+{% endif %}
+{% endblock %}

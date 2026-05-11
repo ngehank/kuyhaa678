@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Database Cookies — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="flex-between">
+    <div>
+      <h2 class="page-title">🗄️ Database Cookies</h2>
+      <p class="page-subtitle">{{ pagination.total }} cookies tersimpan</p>
+    </div>
+    <div class="flex gap-2">
+      <form method="POST" action="{{ url_for('admin.delete_expired') }}" onsubmit="return confirm('Hapus semua cookies expired?')">
+        <button class="btn btn-secondary btn-sm">🗑️ Hapus Expired</button>
+      </form>
+      <form method="POST" action="{{ url_for('admin.delete_all') }}" onsubmit="return confirm('⚠️ PERINGATAN: Yakin ingin MENGHAPUS SEMUA data cookies dari database? Tindakan ini tidak bisa dibatalkan!')">
+        <button class="btn btn-danger btn-sm">🧨 Hapus Semua</button>
+      </form>
+      <a href="{{ url_for('admin.check') }}" class="btn btn-primary btn-sm">🔍 Check Baru</a>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER -->
+<div class="card mb-3">
+  <form method="GET" class="flex" style="gap:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div class="form-group" style="margin:0;flex:1;min-width:150px;">
+      <label class="form-label">Filter Plan</label>
+      <select name="plan" class="form-control">
+        <option value="">Semua Plan</option>
+        {% for p in plans %}<option value="{{ p.plan_key }}" {% if plan_filter==p.plan_key %}selected{% endif %}>{{ p.plan_name or p.plan_key }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin:0;flex:1;min-width:120px;">
+      <label class="form-label">Filter Negara</label>
+      <select name="country" class="form-control">
+        <option value="">Semua Negara</option>
+        {% for c in countries %}<option value="{{ c.country }}" {% if country_filter==c.country %}selected{% endif %}>{{ c.country }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin:0;flex:2;min-width:180px;">
+      <label class="form-label">Cari</label>
+      <input type="text" name="search" class="form-control" placeholder="Email, nama, negara..." value="{{ search }}">
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm" style="margin-bottom:1px;">🔍 Filter</button>
+    <a href="{{ url_for('admin.results') }}" class="btn btn-secondary btn-sm" style="margin-bottom:1px;">✕ Reset</a>
+  </form>
+</div>
+
+<!-- TABLE -->
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Plan</th><th>Negara</th><th>Email</th>
+          <th>Kualitas</th><th>Max Layar</th><th>Next Billing</th><th>Dicek</th><th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in pagination.items %}
+        {% set badge_map = {'premium':'badge-premium','standard':'badge-standard','standard_with_ads':'badge-standard','basic':'badge-basic','mobile':'badge-mobile','free':'badge-free'} %}
+        <tr>
+          <td style="color:var(--muted);">{{ c.id }}</td>
+          <td><span class="badge {{ badge_map.get(c.plan_key,'') }}">{{ c.plan_name or c.plan_key }}</span></td>
+          <td>🌍 <strong>{{ c.country or '?' }}</strong></td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.email or '—' }}</td>
+          <td>{{ c.quality or '—' }}</td>
+          <td>{{ c.max_streams or '—' }}</td>
+          <td style="font-size:12px;color:var(--muted);">{{ c.next_billing or '—' }}</td>
+          <td style="font-size:11px;color:var(--muted);">{{ c.checked_at.strftime('%d/%m %H:%M') if c.checked_at else '—' }}</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('user.cookie_detail', cookie_id=c.id) }}" class="btn btn-cyan btn-xs">👁️</a>
+              <form method="POST" action="{{ url_for('admin.delete_cookie', cookie_id=c.id) }}" style="display:inline;" onsubmit="return confirm('Hapus cookie ini?')">
+                <button class="btn btn-danger btn-xs">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:40px;">Tidak ada data cookies.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION -->
+  {% if pagination.pages > 1 %}
+  <div class="pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.results', page=pagination.prev_num, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn">←</a>
+    {% endif %}
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}<a href="{{ url_for('admin.results', page=p, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
+      {% else %}<span class="page-btn" style="opacity:0.4;">…</span>{% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.results', page=pagination.next_num, plan=plan_filter, country=country_filter, search=search) }}" class="page-btn">→</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

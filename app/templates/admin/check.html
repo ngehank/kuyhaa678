@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Check Cookies — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2 class="page-title">🔍 Cookie Checker</h2>
+  <p class="page-subtitle">Pilih metode upload yang sesuai dengan jumlah file Anda</p>
+</div>
+
+<div class="grid-2">
+  <div>
+    <!-- MODE TABS -->
+    <div class="flex gap-2 mb-3">
+      <button onclick="setMode('files')" id="tab-files" class="btn btn-primary btn-sm">📁 Multi-File</button>
+      <button onclick="setMode('zip')" id="tab-zip" class="btn btn-secondary btn-sm">🗜️ Upload ZIP</button>
+      <button onclick="setMode('folder')" id="tab-folder" class="btn btn-secondary btn-sm">📂 Folder Path</button>
+    </div>
+
+    <div class="card">
+      <form method="POST" enctype="multipart/form-data" id="checkForm">
+        <input type="hidden" name="upload_mode" id="upload_mode" value="files">
+
+        <!-- MODE 1: Multi-file upload -->
+        <div id="panel-files">
+          <div class="form-group">
+            <label class="form-label">Upload File Cookies <span class="text-muted">(support 1000+ file)</span></label>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+              <div class="upload-icon">📂</div>
+              <p><strong>Klik atau drag & drop</strong> file cookie di sini</p>
+              <p style="font-size:12px;margin-top:6px;">Format: .txt atau .json — bisa pilih semua file sekaligus (Ctrl+A)</p>
+              <div id="fileList" style="margin-top:12px;"></div>
+            </div>
+            <input type="file" id="fileInput" name="cookies" multiple accept=".txt,.json" style="display:none" onchange="updateFileList(this)">
+          </div>
+        </div>
+
+        <!-- MODE 2: ZIP upload -->
+        <div id="panel-zip" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Upload File ZIP</label>
+            <div class="upload-zone" onclick="document.getElementById('zipInput').click()">
+              <div class="upload-icon">🗜️</div>
+              <p><strong>Klik untuk pilih</strong> file ZIP</p>
+              <p style="font-size:12px;margin-top:6px;">Zip semua file .txt/.json cookies Anda menjadi 1 file ZIP</p>
+              <div id="zipName" style="margin-top:8px;font-size:13px;color:var(--cyan);"></div>
+            </div>
+            <input type="file" id="zipInput" name="zip_file" accept=".zip" style="display:none"
+                   onchange="document.getElementById('zipName').textContent = this.files[0]?.name || ''">
+          </div>
+          <div class="alert alert-info" style="font-size:13px;">
+            💡 <strong>Cara:</strong> Pilih semua 1041 file cookie → klik kanan → <em>Send to → Compressed folder</em> → upload ZIP-nya di sini
+          </div>
+        </div>
+
+        <!-- MODE 3: Folder path server -->
+        <div id="panel-folder" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Path Folder di Server</label>
+            <input type="text" name="folder_path" class="form-control"
+                   placeholder="Contoh: D:\cookies atau C:\Users\kurapika\cookies">
+            <small class="text-muted" style="font-size:11px;">
+              Masukkan path folder yang berisi file cookie .txt/.json di komputer ini (server).
+            </small>
+          </div>
+          <div class="alert alert-warning" style="font-size:13px;">
+            ⚠️ <strong>Paling cepat untuk batch besar.</strong> Letakkan semua cookie di satu folder lalu masukkan pathnya di atas.
+          </div>
+        </div>
+
+        <!-- COMMON SETTINGS -->
+        <div class="divider"></div>
+        <div class="grid-2" style="gap:12px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Jumlah Thread <span class="text-muted">(1-30)</span></label>
+            <input type="number" name="threads" class="form-control" value="10" min="1" max="30">
+          </div>
+        </div>
+
+        <div class="form-group mt-2">
+          <label class="form-label">Proxy (opsional)</label>
+          <textarea name="proxies" class="form-control" rows="3"
+                    placeholder="ip:port&#10;user:pass@ip:port&#10;socks5://ip:port"></textarea>
+          <small class="text-muted" style="font-size:11px;">Kosongkan jika tidak pakai proxy</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:15px;">
+          🚀 Mulai Checking
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- GUIDE -->
+  <div class="card">
+    <div class="card-title">📋 Panduan Upload</div>
+    <div style="font-size:14px;line-height:1.8;color:var(--muted);">
+
+      <p><strong style="color:var(--text);">🔥 Untuk 1000+ File (Rekomendasi):</strong></p>
+      <div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.1);border-radius:8px;padding:12px;margin:8px 0 16px;">
+        <p style="color:var(--cyan);font-weight:600;margin-bottom:6px;">Metode Folder Path (Tercepat)</p>
+        <ol style="padding-left:18px;line-height:2;">
+          <li>Letakkan semua cookie di folder, misal <code style="color:var(--gold);">D:\cookies</code></li>
+          <li>Klik tab <strong style="color:var(--text);">📂 Folder Path</strong></li>
+          <li>Ketik path foldernya</li>
+          <li>Klik Mulai Checking</li>
+        </ol>
+      </div>
+
+      <p><strong style="color:var(--text);">🗜️ Metode ZIP:</strong></p>
+      <ol style="padding-left:18px;line-height:2;margin-bottom:16px;">
+        <li>Select semua file cookie (Ctrl+A)</li>
+        <li>Klik kanan → Compress / Send to ZIP</li>
+        <li>Upload ZIP di tab ZIP</li>
+      </ol>
+
+      <p><strong style="color:var(--text);">Format Cookie Didukung:</strong></p>
+      <ul style="list-style:none;padding:0;margin-bottom:16px;">
+        <li>✅ Netscape / EditThisCookie format (.txt)</li>
+        <li>✅ JSON array format (.json)</li>
+        <li>✅ Raw key=value format</li>
+      </ul>
+
+      <p><strong style="color:var(--text);">Hasil Pengelompokan:</strong></p>
+      <ul style="list-style:none;padding:0;">
+        <li>👑 Premium · ⭐ Standard · 📺 Standard+Ads</li>
+        <li>📱 Basic · 📲 Mobile · 🆓 Free</li>
+        <li>+ Dikelompokkan per Negara</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function setMode(mode) {
+  ['files','zip','folder'].forEach(m => {
+    document.getElementById('panel-'+m).style.display = m===mode ? 'block' : 'none';
+    const btn = document.getElementById('tab-'+m);
+    btn.className = m===mode ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+  });
+  document.getElementById('upload_mode').value = mode;
+}
+
+function updateFileList(input) {
+  const list = document.getElementById('fileList');
+  if (!input.files.length) { list.innerHTML=''; return; }
+  const n = input.files.length;
+  list.innerHTML = `<div style="color:var(--cyan);font-weight:600;font-size:13px;">✅ ${n} file dipilih</div>` +
+    Array.from(input.files).slice(0,4).map(f =>
+      `<div style="font-size:11px;color:var(--muted);">• ${f.name}</div>`
+    ).join('') +
+    (n>4 ? `<div style="font-size:11px;color:var(--muted);">... dan ${n-4} file lainnya</div>` : '');
+}
+
+const zone = document.getElementById('uploadZone');
+if (zone) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    const inp = document.getElementById('fileInput');
+    inp.files = e.dataTransfer.files;
+    updateFileList(inp);
+  });
+}
+</script>
+{% endblock %}

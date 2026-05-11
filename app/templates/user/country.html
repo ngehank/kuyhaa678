@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ flag }} {{ country_code }} — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="flex-between">
+    <div>
+      <h2 class="page-title">{{ flag }} {{ country_code }}</h2>
+      <p class="page-subtitle">{{ pagination.total }} cookies tersedia dari negara ini</p>
+    </div>
+    <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary btn-sm">← Kembali</a>
+  </div>
+</div>
+
+<!-- PLAN FILTER -->
+{% if plans_in_country|length > 1 %}
+<div class="flex gap-2 mb-3" style="flex-wrap:wrap;">
+  <a href="{{ url_for('user.country_view', country_code=country_code) }}" class="btn btn-sm {% if not plan_filter %}btn-primary{% else %}btn-secondary{% endif %}">Semua</a>
+  {% for p in plans_in_country %}
+  <a href="{{ url_for('user.country_view', country_code=country_code, plan=p.plan_key) }}"
+     class="btn btn-sm {% if plan_filter==p.plan_key %}btn-primary{% else %}btn-secondary{% endif %}">
+    {{ plan_meta.get(p.plan_key, {}).get('icon','📦') }} {{ p.plan_name or p.plan_key }}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- COOKIE LIST -->
+{% set badge_cls = {'premium':'badge-premium','standard':'badge-standard','standard_with_ads':'badge-standard','basic':'badge-basic','mobile':'badge-mobile','free':'badge-free'} %}
+<div class="grid-3">
+  {% for c in pagination.items %}
+  <a href="{{ url_for('user.cookie_detail', cookie_id=c.id) }}" class="plan-card" style="text-decoration:none;">
+    <div class="flex-between mb-2">
+      <span class="badge {{ badge_cls.get(c.plan_key,'') }}">{{ c.plan_name or c.plan_key }}</span>
+      <span style="font-size:12px;color:var(--muted);">{{ c.quality or '—' }}</span>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">📧 {{ c.email or 'Akun Netflix' }}</div>
+    <div class="flex gap-2" style="font-size:13px;">
+      <span>📺 {{ c.max_streams or '?' }} Layar</span>
+      <span style="color:var(--muted);">·</span>
+      <span>{{ c.plan_price or '—' }}</span>
+    </div>
+    {% if c.next_billing %}
+    <div style="font-size:12px;color:var(--muted);margin-top:8px;">📅 Billing: {{ c.next_billing }}</div>
+    {% endif %}
+    <div class="btn btn-cyan btn-sm mt-2" style="display:inline-flex;">🔑 Lihat Token</div>
+  </a>
+  {% else %}
+  <div class="card" style="grid-column:1/-1;text-align:center;padding:60px;">
+    <p style="color:var(--muted);">Tidak ada cookies untuk filter ini.</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- PAGINATION -->
+{% if pagination.pages > 1 %}
+<div class="pagination">
+  {% if pagination.has_prev %}
+  <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.prev_num, plan=plan_filter) }}" class="page-btn">←</a>
+  {% endif %}
+  {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+    {% if p %}<a href="{{ url_for('user.country_view', country_code=country_code, page=p, plan=plan_filter) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
+    {% else %}<span class="page-btn" style="opacity:0.4;">…</span>{% endif %}
+  {% endfor %}
+  {% if pagination.has_next %}
+  <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.next_num, plan=plan_filter) }}" class="page-btn">→</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

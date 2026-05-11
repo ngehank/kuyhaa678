@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="flex-between">
+    <div>
+      <h2 class="page-title">📊 Dashboard Admin</h2>
+      <p class="page-subtitle">Overview sistem cookies Netflix</p>
+    </div>
+    <a href="{{ url_for('admin.check') }}" class="btn btn-primary">🔍 Check Cookies Baru</a>
+  </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="grid-4 mb-3">
+  <div class="stat-card red">
+    <div class="icon-bg">🍪</div>
+    <div class="number text-red">{{ total }}</div>
+    <div class="label">Total Cookies</div>
+  </div>
+  <div class="stat-card cyan">
+    <div class="icon-bg">👥</div>
+    <div class="number text-cyan">{{ total_users }}</div>
+    <div class="label">Total Users</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="icon-bg">⏳</div>
+    <div class="number" style="color:var(--gold);">{{ pending_users }}</div>
+    <div class="label">Pending Approval</div>
+  </div>
+  <div class="stat-card green">
+    <div class="icon-bg">🌍</div>
+    <div class="number text-success">{{ country_stats|length }}</div>
+    <div class="label">Negara Tersedia</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- PLAN BREAKDOWN -->
+  <div class="card">
+    <div class="card-title">📦 Breakdown per Plan</div>
+    {% set plan_colors = {'premium':'#E50914','standard_with_ads':'#F5A623','standard':'#2196F3','basic':'#4CAF50','mobile':'#9C27B0','free':'#607D8B','extra_member_premium':'#FF5722'} %}
+    {% set plan_icons = {'premium':'👑','standard_with_ads':'📺','standard':'⭐','basic':'📱','mobile':'📲','free':'🆓','extra_member_premium':'➕'} %}
+    {% for row in plan_stats %}
+    <div style="margin-bottom:12px;">
+      <div class="flex-between mb-1">
+        <span style="font-size:14px;font-weight:600;">
+          {{ plan_icons.get(row.plan_key,'📦') }} {{ row.plan_name or row.plan_key }}
+        </span>
+        <span style="font-size:14px;font-weight:700;color:{{ plan_colors.get(row.plan_key,'#888') }}">{{ row.count }}</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:{{ [row.count * 100 // [total,1]|max, 100]|min }}%;background:{{ plan_colors.get(row.plan_key,'var(--red)') }};"></div>
+      </div>
+    </div>
+    {% else %}
+    <p class="text-muted" style="font-size:14px;">Belum ada data cookies.</p>
+    {% endfor %}
+  </div>
+
+  <!-- COUNTRY TOP -->
+  <div class="card">
+    <div class="card-title">🌍 Top Negara</div>
+    {% set flags = {'US':'🇺🇸','ID':'🇮🇩','JP':'🇯🇵','KR':'🇰🇷','GB':'🇬🇧','DE':'🇩🇪','FR':'🇫🇷','BR':'🇧🇷','IN':'🇮🇳','AU':'🇦🇺','CA':'🇨🇦','SG':'🇸🇬','MY':'🇲🇾','TH':'🇹🇭','PH':'🇵🇭'} %}
+    {% for row in country_stats %}
+    <div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;">
+      <span>{{ flags.get(row.country,'🌍') }} <strong>{{ row.country }}</strong></span>
+      <span class="badge badge-premium">{{ row.count }}</span>
+    </div>
+    {% else %}
+    <p class="text-muted" style="font-size:14px;">Belum ada data.</p>
+    {% endfor %}
+  </div>
+</div>
+
+{% if pending_users > 0 %}
+<div class="alert alert-warning mt-3">
+  ⚠️ Ada <strong>{{ pending_users }}</strong> user menunggu persetujuan.
+  <a href="{{ url_for('admin.users') }}" style="color:var(--warning);font-weight:700;">Kelola sekarang →</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2 class="page-title">🏠 Selamat Datang, {{ current_user.username }}!</h2>
+  <p class="page-subtitle">{{ total }} cookies tersedia — Pilih plan atau negara yang kamu inginkan</p>
+</div>
+
+<!-- PLAN CARDS -->
+<div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">📦 Pilih Berdasarkan Plan</div>
+<div class="grid-auto mb-4">
+  {% for p in plans %}
+  <a href="{{ url_for('user.plan_view', plan_key=p.key) }}" class="plan-card" style="border-color:{{ p.color }}22;">
+    <div class="glow" style="background:{{ p.color }};"></div>
+    <div class="plan-icon">{{ p.icon }}</div>
+    <div class="plan-name">{{ p.label }}</div>
+    <div class="plan-desc">{{ p.desc }}</div>
+    <div class="plan-count" style="color:{{ p.color }};">{{ p.count }}</div>
+    <div style="font-size:11px;color:var(--muted);">cookies tersedia</div>
+  </a>
+  {% else %}
+  <div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px;">Belum ada cookies tersedia.</div>
+  {% endfor %}
+</div>
+
+<!-- COUNTRY GRID -->
+<div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">🌍 Pilih Berdasarkan Negara</div>
+<div class="grid-auto">
+  {% for c in countries %}
+  <a href="{{ url_for('user.country_view', country_code=c.code) }}" class="country-card">
+    <div class="flag">{{ c.flag }}</div>
+    <div class="code">{{ c.code }}</div>
+    <div class="count">{{ c.count }} cookies</div>
+  </a>
+  {% else %}
+  <div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px;">Belum ada data tersedia.</div>
+  {% endfor %}
+</div>
+{% endblock %}

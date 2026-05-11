@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Detail Cookie #{{ cookie.id }} — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="flex-between">
+    <div>
+      <h2 class="page-title">{{ flag }} {{ cookie.country }} — {{ plan_meta.icon }} {{ plan_meta.label }}</h2>
+      <p class="page-subtitle">Detail akun Netflix #{{ cookie.id }}</p>
+    </div>
+    <a href="javascript:history.back()" class="btn btn-secondary btn-sm">← Kembali</a>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- INFO AKUN -->
+  <div class="card">
+    <div class="card-title">📋 Informasi Akun</div>
+    {% macro row(key, val) %}
+    <div class="info-row">
+      <span class="info-key">{{ key }}</span>
+      <span class="info-val">{{ val if val else '—' }}</span>
+    </div>
+    {% endmacro %}
+    {{ row('Plan', cookie.plan_name) }}
+    {{ row('Negara', flag + ' ' + cookie.country) }}
+    {{ row('Kualitas', cookie.quality) }}
+    {{ row('Max Layar', cookie.max_streams) }}
+    {{ row('Harga', cookie.plan_price) }}
+    {{ row('Next Billing', cookie.next_billing) }}
+    {{ row('Member Sejak', cookie.member_since) }}
+    {{ row('Metode Bayar', cookie.payment_method) }}
+    {{ row('Extra Member', cookie.extra_members) }}
+    {{ row('Hold Status', cookie.hold_status) }}
+    {{ row('Status Membership', cookie.membership_status) }}
+    {% if cookie.profiles %}
+    {{ row('Profil', cookie.profiles) }}
+    {% endif %}
+  </div>
+
+  <!-- TOKEN SECTION -->
+  <div>
+    <div class="card mb-3">
+      <div class="card-title">🔑 Generate NFToken</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+        Klik tombol di bawah untuk generate token login. Token dibuat secara realtime dan tidak disimpan.
+      </p>
+      <button id="btnGetToken" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;" onclick="getToken({{ cookie.id }})">
+        ⚡ Generate Token Sekarang
+      </button>
+
+      <div id="tokenResult" style="display:none;margin-top:20px;">
+        <div class="token-box">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+            ⏱️ Expired: <span id="tokenExpiry" style="color:var(--warning);font-weight:600;"></span>
+          </div>
+          <a id="pcLink" href="#" target="_blank" class="token-link">
+            <span class="t-icon">🖥️</span>
+            <div>
+              <div class="t-label">PC / Desktop Login</div>
+              <div class="t-url" id="pcUrl" style="color:var(--cyan);"></div>
+            </div>
+            <span style="margin-left:auto;font-size:20px;">→</span>
+          </a>
+          <a id="mobileLink" href="#" target="_blank" class="token-link">
+            <span class="t-icon">📱</span>
+            <div>
+              <div class="t-label">Mobile Login</div>
+              <div class="t-url" id="mobileUrl" style="color:var(--cyan);"></div>
+            </div>
+            <span style="margin-left:auto;font-size:20px;">→</span>
+          </a>
+          <div class="flex gap-2 mt-2">
+            <button onclick="copyUrl('pcUrl')" class="copy-btn">📋 Copy PC URL</button>
+            <button onclick="copyUrl('mobileUrl')" class="copy-btn">📋 Copy Mobile URL</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tokenError" style="display:none;margin-top:12px;" class="alert alert-danger"></div>
+      <div id="tokenLoading" style="display:none;margin-top:16px;text-align:center;">
+        <div class="spinner" style="margin:0 auto 8px;"></div>
+        <p style="color:var(--muted);font-size:13px;">Generating token...</p>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function getToken(id) {
+  document.getElementById('btnGetToken').disabled = true;
+  document.getElementById('tokenResult').style.display = 'none';
+  document.getElementById('tokenError').style.display = 'none';
+  document.getElementById('tokenLoading').style.display = 'block';
+
+  try {
+    const res = await fetch(`/user/get-token/${id}`, { method: 'POST', headers: {'X-CSRFToken': getCsrf()} });
+    const data = await res.json();
+    document.getElementById('tokenLoading').style.display = 'none';
+
+    if (data.success) {
+      document.getElementById('tokenExpiry').textContent = data.expires_at || 'Unknown';
+      document.getElementById('pcLink').href = data.pc_url;
+      document.getElementById('pcUrl').textContent = data.pc_url;
+      document.getElementById('mobileLink').href = data.mobile_url;
+      document.getElementById('mobileUrl').textContent = data.mobile_url;
+      document.getElementById('tokenResult').style.display = 'block';
+    } else {
+      document.getElementById('tokenError').textContent = '❌ ' + (data.error || 'Gagal generate token');
+      document.getElementById('tokenError').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('tokenLoading').style.display = 'none';
+    document.getElementById('tokenError').textContent = '❌ Network error: ' + e.message;
+    document.getElementById('tokenError').style.display = 'block';
+  }
+  document.getElementById('btnGetToken').disabled = false;
+}
+
+function getCsrf() {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.content : '';
+}
+
+function copyUrl(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => alert('URL tersalin!'));
+}
+
+
+</script>
+{% endblock %}
