@@ -42,24 +42,24 @@
 
   <!-- TOKEN SECTION -->
   <div>
-    {% if cookie.service_type == 'primevideo' %}
+    {% if cookie.service_type != 'netflix' %}
     <div class="card mb-3">
-      <div class="card-title">🍪 Raw Cookies (Prime Video)</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
-        Use the <strong>Cookie-Editor</strong> browser extension to log in using these raw cookies.
+      <div class="card-title">🍪 Raw Cookies ({{ cookie.service_type|upper }})</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+        Use the <strong>Cookie-Editor</strong> browser extension or our Console Script to log in.
       </p>
 
       <!-- Loading overlay -->
       <div id="cookieLoadingBox" style="text-align:center;padding:32px 16px;">
         <div style="font-size:48px;margin-bottom:12px;">🔐</div>
         <p style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">Fetching Secure Cookies...</p>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:20px;">Please wait while we retrieve your session data</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">Please wait while we retrieve your session data</p>
         <div style="position:relative;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-bottom:16px;">
-          <div id="cookieProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#009736,#00d4ff);border-radius:4px;transition:width 0.5s linear;"></div>
+          <div id="cookieProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:4px;transition:width 0.5s linear;"></div>
         </div>
-        <p style="font-size:28px;font-weight:800;color:var(--cyan);" id="cookieCountdown">15</p>
-        <p style="font-size:11px;color:var(--muted);">seconds remaining</p>
-        <button id="btnShowCookies" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;margin-top:16px;font-size:15px;" onclick="startCookieCountdown()">
+        <p style="font-size:36px;font-weight:900;color:var(--cyan);letter-spacing:-1px;" id="cookieCountdown">15</p>
+        <p style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">seconds remaining</p>
+        <button id="btnShowCookies" class="btn btn-primary mt-3" style="width:100%;" onclick="startCookieCountdown()">
           🚀 View Cookies
         </button>
       </div>
@@ -74,23 +74,61 @@
     </div>
 
     <div class="card">
-      <div class="card-title">📖 How to Login with Cookie-Editor</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.8;">
+      <div class="card-title">📖 Login Methods</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.8;">
+        
+        <!-- OPTION 1: CONSOLE (FAST) -->
+        {% if cookie.service_type != 'netflix' %}
+        <div style="background:rgba(255,255,255,0.03); border-left:3px solid var(--{{
+            'spotify-green' if cookie.service_type == 'spotify' else 
+            'gold' if cookie.service_type == 'crunchyroll' else 
+            'purple' if cookie.service_type in ['udemy','gog'] else 
+            'yellow' if cookie.service_type == 'claude' else
+            'cyan'
+          }}); padding:16px; border-radius:var(--radius-sm); margin-bottom:20px;">
+           <p style="color:var(--text); font-weight:700; margin-bottom:4px;">⚡ Method 1: Console Quick Login (No Extension)</p>
+           <p style="font-size:12px; margin-bottom:12px;">Best for PC. No need to install anything.</p>
+           <button onclick="copyConsoleScript('{{ cookie.service_type }}')" class="btn btn-sm" style="background:var(--{{
+            'spotify-green' if cookie.service_type == 'spotify' else 
+            'gold' if cookie.service_type == 'crunchyroll' else 
+            'purple' if cookie.service_type in ['udemy','gog'] else 
+            'yellow' if cookie.service_type == 'claude' else
+            'cyan'
+          }}); color:#000; width:100%; font-weight:800; font-size:14px;">
+             📋 Copy Console Script
+           </button>
+           <p style="font-size:11px; margin-top:12px; line-height:1.5;">Then: Go to <strong style="color:#fff;">
+             {% if cookie.service_type == 'spotify' %}open.spotify.com
+             {% elif cookie.service_type == 'udemy' %}udemy.com
+             {% elif cookie.service_type == 'crunchyroll' %}crunchyroll.com
+             {% elif cookie.service_type == 'claude' %}claude.ai
+             {% elif cookie.service_type == 'gog' %}gog.com
+             {% else %}primevideo.com{% endif %}
+           </strong> → Press <strong>F12</strong> → <strong>Console</strong> → <strong>Paste & Enter</strong></p>
+        </div>
+        {% endif %}
+
+        <p style="color:var(--text); font-weight:700; margin-bottom:8px;">🛠️ Method 2: Cookie-Editor Extension</p>
         <ol style="padding-left:18px;">
-          <li>Install the <strong>Cookie-Editor</strong> extension in your browser (Chrome, Firefox, or Edge).</li>
-          <li>Go to the official website <strong>primevideo.com</strong>.</li>
-          <li>Click the Cookie-Editor extension icon in the top right corner of your browser.</li>
-          <li>Click the <strong>🗑️ (Delete All)</strong> button to clear any existing sessions/cookies.</li>
-          <li>Click the <strong>⬇️ (Import)</strong> button, and paste the <em>Raw Cookies</em> text copied above.</li>
-          <li>Click the <strong>Import</strong> button below the text box.</li>
-          <li>Refresh the primevideo.com page, and you will be automatically logged in. Done! 🎉</li>
+          <li>Install the <strong>Cookie-Editor</strong> extension.</li>
+          <li>Go to <strong style="color:#fff;">
+             {% if cookie.service_type == 'spotify' %}open.spotify.com
+             {% elif cookie.service_type == 'udemy' %}udemy.com
+             {% elif cookie.service_type == 'crunchyroll' %}crunchyroll.com
+             {% elif cookie.service_type == 'claude' %}claude.ai
+             {% elif cookie.service_type == 'gog' %}gog.com
+             {% else %}primevideo.com{% endif %}
+          </strong>.</li>
+          <li>Click extension → <strong>🗑️ Delete All</strong>.</li>
+          <li>Click <strong>⬇️ Import</strong> → Paste <em>Raw Cookies</em>.</li>
+          <li>Click <strong>Import</strong> and Refresh page. 🎉</li>
         </ol>
       </div>
     </div>
     {% else %}
     <div class="card mb-3">
       <div class="card-title">🔑 Generate NFToken</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
         Click the button below to generate a login token. Tokens are generated in real-time and are not saved.
       </p>
 
@@ -105,19 +143,19 @@
       <div id="tokenLoadingBox" style="display:none;text-align:center;padding:32px 16px;">
         <div style="font-size:48px;margin-bottom:12px;animation:spin-slow 3s linear infinite;display:inline-block;">🔐</div>
         <p style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">Generating Secure Token...</p>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:20px;">Authenticating with Netflix servers</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">Authenticating with Netflix servers</p>
         <div style="position:relative;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-bottom:16px;">
           <div id="tokenProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#E50914,#ff6b6b);border-radius:4px;transition:width 0.5s linear;"></div>
         </div>
-        <p style="font-size:36px;font-weight:900;color:var(--red);" id="tokenCountdown">15</p>
-        <p style="font-size:11px;color:var(--muted);">seconds remaining</p>
+        <p style="font-size:36px;font-weight:900;color:var(--red);letter-spacing:-1px;" id="tokenCountdown">15</p>
+        <p style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">seconds remaining</p>
       </div>
 
       <!-- Token result -->
       <div id="tokenResult" style="display:none;margin-top:20px;">
         <div class="token-box">
-          <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
-            ⏱️ Expires: <span id="tokenExpiry" style="color:var(--warning);font-weight:600;"></span>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;font-weight:600;">
+            ⏱️ Expires: <span id="tokenExpiry" style="color:var(--warning);font-weight:800;"></span>
           </div>
           <a id="pcLink" href="#" target="_blank" class="token-link">
             <span class="t-icon">🖥️</span>
@@ -135,14 +173,14 @@
             </div>
             <span style="margin-left:auto;font-size:20px;">→</span>
           </a>
-          <div class="flex gap-2 mt-2">
+          <div class="flex gap-2 mt-3">
             <button onclick="copyUrl('pcUrl')" class="copy-btn">📋 Copy PC URL</button>
             <button onclick="copyUrl('mobileUrl')" class="copy-btn">📋 Copy Mobile URL</button>
           </div>
         </div>
       </div>
 
-      <div id="tokenError" style="display:none;margin-top:12px;" class="alert alert-danger"></div>
+      <div id="tokenError" style="display:none;margin-top:16px;" class="alert alert-danger"></div>
     </div>
     {% endif %}
 
@@ -202,14 +240,23 @@ function startTokenCountdown(cookieId) {
 function startCookieCountdown() {
   const btn = document.getElementById('btnShowCookies');
   btn.disabled = true;
-  btn.innerHTML = '\u23f3 Loading...';
+  btn.innerHTML = '⌛ Waiting for Session...';
+  btn.style.background = 'rgba(255,255,255,0.1)';
 
   const SECONDS = 15;
   let remaining = SECONDS;
   const countdown = document.getElementById('cookieCountdown');
   const bar = document.getElementById('cookieProgressBar');
 
-  setTimeout(() => { bar.style.transition = `width ${SECONDS}s linear`; bar.style.width = '100%'; }, 50);
+  // Reset bar
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  
+  setTimeout(() => { 
+    bar.style.transition = `width ${SECONDS}s linear`; 
+    bar.style.width = '100%'; 
+    bar.style.background = 'linear-gradient(90deg, #06b6d4, #8b5cf6)';
+  }, 50);
 
   const timer = setInterval(() => {
     remaining--;
@@ -232,9 +279,50 @@ function copyUrl(id) {
   navigator.clipboard.writeText(text).then(() => alert('URL copied!'));
 }
 
-function copyRawCookies() {
-  const text = document.getElementById('rawCookies').value;
-  navigator.clipboard.writeText(text).then(() => alert('Raw cookies copied successfully!'));
+function copyConsoleScript(service) {
+  const rawData = document.getElementById('rawCookies').value;
+  let cookies;
+  try {
+    cookies = JSON.parse(rawData);
+    if (!Array.isArray(cookies)) cookies = parseNetscape(rawData);
+  } catch(e) {
+    cookies = parseNetscape(rawData);
+  }
+  let script = 'const cookies = ' + JSON.stringify(cookies) + ';\n';
+  script += 'for (const item of cookies) {\n';
+  script += '  document.cookie = `${item.name}=${item.value}; domain=${item.domain}; path=/; expires=Tue, 19 Jan 2038 03:14:07 GMT; SameSite=Lax`;\n';
+  script += '}\n';
+  script += 'alert("Cookies injected! Refreshing page...");\n';
+  script += 'location.reload();';
+  
+  const sites = {
+    'spotify': 'open.spotify.com',
+    'udemy': 'udemy.com',
+    'crunchyroll': 'crunchyroll.com',
+    'claude': 'claude.ai',
+    'gog': 'gog.com',
+    'primevideo': 'primevideo.com'
+  };
+  const site = sites[service] || 'the website';
+  navigator.clipboard.writeText(script).then(() => {
+    alert(`Console script copied! Now go to ${site}, press F12, go to Console, and paste this script.`);
+  });
+}
+
+function parseNetscape(text) {
+  const cookies = [];
+  text.split('\n').forEach(line => {
+    if (!line.trim() || line.startsWith('#')) return;
+    const parts = line.split('\t');
+    if (parts.length >= 7) {
+      cookies.push({
+        domain: parts[0].trim(),
+        name: parts[5].trim(),
+        value: parts[6].trim()
+      });
+    }
+  });
+  return cookies;
 }
 </script>
 

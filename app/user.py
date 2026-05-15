@@ -31,6 +31,14 @@ PLAN_META = {
     'mobile': {'label': 'Mobile', 'icon': '📲', 'color': '#9C27B0', 'desc': 'Mobile Only'},
     'free': {'label': 'Free', 'icon': '🆓', 'color': '#607D8B', 'desc': 'No Subscription'},
     'extra_member_premium': {'label': 'Extra Member', 'icon': '➕', 'color': '#FF5722', 'desc': 'Extra Member Premium'},
+    # Udemy
+    'udemy_premium': {'label': 'Premium', 'icon': '🎓', 'color': '#A435F0', 'desc': 'Paid Course Access'},
+    # Crunchyroll
+    'crunchyroll_premium': {'label': 'Premium', 'icon': '🟠', 'color': '#F47521', 'desc': 'Mega Fan / Fan'},
+    # Claude
+    'claude_pro': {'label': 'Pro', 'icon': '🎨', 'color': '#D97757', 'desc': 'Claude Pro Subscription'},
+    # GOG
+    'gog_premium': {'label': 'Account', 'icon': '⚙️', 'color': '#B145FF', 'desc': 'GOG.com Account'},
 }
 
 # Comprehensive country data: code -> (flag_emoji, full_english_name)
@@ -189,16 +197,21 @@ COUNTRY_DATA = {
     'MW': ('🇲🇼', 'Malawi'),
     'BI': ('🇧🇮', 'Burundi'),
     'SO': ('🇸🇴', 'Somalia'),
+    # Global
+    'XX': ('🌐', 'Global / Unknown'),
+    'UNKNOWN': ('🌐', 'Global / Unknown'),
 }
 
 
 def get_flag(country_code):
-    code = (country_code or '').upper()
+    code = (country_code or 'XX').upper()
+    if code == 'UNKNOWN': code = 'XX'
     return COUNTRY_DATA.get(code, ('🌍', code))[0]
 
 
 def get_country_name(country_code):
-    code = (country_code or '').upper()
+    code = (country_code or 'XX').upper()
+    if code == 'UNKNOWN': code = 'XX'
     return COUNTRY_DATA.get(code, ('🌍', code))[1]
 
 
@@ -273,15 +286,25 @@ def country_view(country_code):
     page = request.args.get('page', 1, type=int)
     plan_filter = request.args.get('plan', '')
 
-    query = CookieResult.query.filter(CookieResult.country == country_code.upper(), CookieResult.service_type == service)
+    country_code_normalized = country_code.strip()
+    if country_code_normalized.upper() == 'UNKNOWN':
+        query = CookieResult.query.filter(CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx']), CookieResult.service_type == service)
+    else:
+        query = CookieResult.query.filter(CookieResult.country == country_code_normalized, CookieResult.service_type == service)
+
     if plan_filter:
         query = query.filter(CookieResult.plan_key == plan_filter)
 
     pagination = query.order_by(CookieResult.checked_at.desc()).paginate(page=page, per_page=12)
 
-    plans_in_country = db.session.query(
-        CookieResult.plan_key, CookieResult.plan_name
-    ).filter(CookieResult.country == country_code.upper(), CookieResult.service_type == service).distinct().all()
+    if country_code.strip().upper() == 'UNKNOWN':
+        plans_in_country = db.session.query(
+            CookieResult.plan_key, CookieResult.plan_name
+        ).filter(CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx']), CookieResult.service_type == service).distinct().all()
+    else:
+        plans_in_country = db.session.query(
+            CookieResult.plan_key, CookieResult.plan_name
+        ).filter(CookieResult.country == country_code, CookieResult.service_type == service).distinct().all()
 
     flag = get_flag(country_code)
     country_name = get_country_name(country_code)

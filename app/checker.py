@@ -44,6 +44,28 @@ except ImportError as e:
     PRIME_CHECKER_AVAILABLE = False
     print(f"[WARNING] Could not import prime checker: {e}")
 
+try:
+    from .spotify_checker_main import (
+        check_spotify_cookie,
+        parse_spotify_cookie_text,
+    )
+    from .udemy_checker import check_udemy_cookie
+    from .crunchyroll_checker import check_crunchyroll_cookie
+    from .claude_checker import check_claude_cookie
+    from .gog_checker import check_gog_cookie
+    SPOTIFY_CHECKER_AVAILABLE = True
+    UDEMY_CHECKER_AVAILABLE = True
+    CRUNCHYROLL_CHECKER_AVAILABLE = True
+    CLAUDE_CHECKER_AVAILABLE = True
+    GOG_CHECKER_AVAILABLE = True
+except ImportError as e:
+    SPOTIFY_CHECKER_AVAILABLE = False
+    UDEMY_CHECKER_AVAILABLE = False
+    CRUNCHYROLL_CHECKER_AVAILABLE = False
+    CLAUDE_CHECKER_AVAILABLE = False
+    GOG_CHECKER_AVAILABLE = False
+    print(f"[WARNING] Could not import some extra checkers: {e}")
+
 # Global state for cancelling
 checker_state = {'cancel': False}
 
@@ -233,6 +255,56 @@ def check_single_prime_cookie(cookie_text: str, proxy_list: list = None) -> dict
         return {'status': 'error', 'error_reason': str(e)}
     except Exception as e:
         return {'status': 'error', 'error_reason': str(e)}
+
+
+def check_single_spotify_cookie(cookie_text: str, proxy_list: list = None) -> dict:
+    """
+    Check a single Spotify cookie string.
+    Delegates to spotify_checker_main.check_spotify_cookie().
+    """
+    if is_cancelled():
+        return {'status': 'cancelled'}
+
+    if not SPOTIFY_CHECKER_AVAILABLE:
+        return {'status': 'error', 'error_reason': 'Spotify Checker module not available'}
+
+    try:
+        result = check_spotify_cookie(cookie_text, proxy_list)
+        return result
+    except requests.exceptions.Timeout:
+        return {'status': 'error', 'error_reason': 'Timeout'}
+    except requests.exceptions.ProxyError:
+        return {'status': 'error', 'error_reason': 'Proxy error'}
+    except requests.exceptions.RequestException as e:
+        return {'status': 'error', 'error_reason': str(e)}
+    except Exception as e:
+        return {'status': 'error', 'error_reason': str(e)}
+
+
+def check_single_udemy_cookie(cookie_text: str, proxy_list: list = None) -> dict:
+    if is_cancelled(): return {'status': 'cancelled'}
+    if not UDEMY_CHECKER_AVAILABLE: return {'status': 'error', 'error_reason': 'Module unavailable'}
+    try: return check_udemy_cookie(cookie_text, proxy_list)
+    except Exception as e: return {'status': 'error', 'error_reason': str(e)}
+
+def check_single_crunchyroll_cookie(cookie_text: str, proxy_list: list = None) -> dict:
+    if is_cancelled(): return {'status': 'cancelled'}
+    if not CRUNCHYROLL_CHECKER_AVAILABLE: return {'status': 'error', 'error_reason': 'Module unavailable'}
+    try: return check_crunchyroll_cookie(cookie_text, proxy_list)
+    except Exception as e: return {'status': 'error', 'error_reason': str(e)}
+
+def check_single_claude_cookie(cookie_text: str, proxy_list: list = None) -> dict:
+    if is_cancelled(): return {'status': 'cancelled'}
+    if not CLAUDE_CHECKER_AVAILABLE: return {'status': 'error', 'error_reason': 'Module unavailable'}
+    try: return check_claude_cookie(cookie_text, proxy_list)
+    except Exception as e: return {'status': 'error', 'error_reason': str(e)}
+
+def check_single_gog_cookie(cookie_text: str, proxy_list: list = None) -> dict:
+    if is_cancelled(): return {'status': 'cancelled'}
+    if not GOG_CHECKER_AVAILABLE: return {'status': 'error', 'error_reason': 'Module unavailable'}
+    try: return check_gog_cookie(cookie_text, proxy_list)
+    except Exception as e: return {'status': 'error', 'error_reason': str(e)}
+
 
 
 def parse_proxy_text(proxy_text: str) -> list:

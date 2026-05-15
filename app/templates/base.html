@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Netflix Cookie Manager{% endblock %}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -68,7 +68,7 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <h1>🎬 NF Manager</h1>
+      <h1>🎬 <span class="logo-text">NF Manager</span></h1>
       <span>Cookie Dashboard</span>
     </div>
 
@@ -89,6 +89,13 @@
         <span class="icon">👥</span> Manage Users
       </a>
     </div>
+
+    <div class="nav-section">
+      <div class="nav-label">User View</div>
+      <a href="{{ url_for('user.dashboard') }}" class="nav-link">
+        <span class="icon">🏠</span> User Dashboard
+      </a>
+    </div>
     {% else %}
     <div class="nav-section">
       <div class="nav-label">Services</div>
@@ -98,6 +105,21 @@
       <a href="{{ url_for('user.dashboard', service='primevideo') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'primevideo' %}active{% endif %}">
         <span class="icon">🔵</span> Prime Video
       </a>
+      <a href="{{ url_for('user.dashboard', service='spotify') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'spotify' %}active{% endif %}">
+        <span class="icon">🟢</span> Spotify
+      </a>
+      <a href="{{ url_for('user.dashboard', service='udemy') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'udemy' %}active{% endif %}">
+        <span class="icon">🎓</span> Udemy
+      </a>
+      <a href="{{ url_for('user.dashboard', service='crunchyroll') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'crunchyroll' %}active{% endif %}">
+        <span class="icon">🟠</span> Crunchyroll
+      </a>
+      <a href="{{ url_for('user.dashboard', service='claude') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'claude' %}active{% endif %}">
+        <span class="icon">🎨</span> Claude
+      </a>
+      <a href="{{ url_for('user.dashboard', service='gog') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'gog' %}active{% endif %}">
+        <span class="icon">⚙️</span> GOG.com
+      </a>
     </div>
     {% endif %}
     {% endif %}
@@ -105,8 +127,11 @@
     <div class="sidebar-footer">
       {% if current_user.is_authenticated %}
       <div class="sidebar-user">
-        <strong>{{ current_user.username }}</strong>
-        {% if current_user.is_admin %}<span class="badge-admin">Admin</span>{% else %}<span class="badge-user">User</span>{% endif %}
+        <div class="sidebar-user-avatar">{{ current_user.username[0]|upper }}</div>
+        <div class="sidebar-user-details">
+          <strong class="user-name">{{ current_user.username }}</strong>
+          <span class="user-role">{% if current_user.is_admin %}<span class="badge-admin">Admin</span>{% else %}<span class="badge-user">User</span>{% endif %}</span>
+        </div>
       </div>
       <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;">🚪 Logout</a>
       {% endif %}
@@ -114,7 +139,7 @@
   </aside>
 
   <!-- MAIN -->
-  <main class="main-content">
+  <main class="main-content animate-in">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in messages %}
     <div class="alert alert-{{ cat }}">{{ msg }}</div>

@@ -18,3 +18,9 @@ ENV/
 # MacOS/Windows hidden files
 .DS_Store
 Thumbs.db
+
+# Nuitka Build Artifacts
+*.build/
+*.dist/
+*.so
+*.bin

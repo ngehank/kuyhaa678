@@ -6,9 +6,19 @@ from . import db
 from .checker import (
     check_single_cookie, 
     check_single_prime_cookie,
+    check_single_spotify_cookie,
+    check_single_udemy_cookie,
+    check_single_crunchyroll_cookie,
+    check_single_claude_cookie,
+    check_single_gog_cookie,
     parse_proxy_text, 
     CHECKER_AVAILABLE,
     PRIME_CHECKER_AVAILABLE,
+    SPOTIFY_CHECKER_AVAILABLE,
+    UDEMY_CHECKER_AVAILABLE,
+    CRUNCHYROLL_CHECKER_AVAILABLE,
+    CLAUDE_CHECKER_AVAILABLE,
+    GOG_CHECKER_AVAILABLE,
     cancel_checking,
     reset_checker_state,
     is_cancelled
@@ -124,6 +134,16 @@ def _run_check_background(flask_app, file_contents, proxies, threads_count, serv
                 try:
                     if service_type == 'primevideo':
                         result = check_single_prime_cookie(content, proxies)
+                    elif service_type == 'spotify':
+                        result = check_single_spotify_cookie(content, proxies)
+                    elif service_type == 'udemy':
+                        result = check_single_udemy_cookie(content, proxies)
+                    elif service_type == 'crunchyroll':
+                        result = check_single_crunchyroll_cookie(content, proxies)
+                    elif service_type == 'claude':
+                        result = check_single_claude_cookie(content, proxies)
+                    elif service_type == 'gog':
+                        result = check_single_gog_cookie(content, proxies)
                     else:
                         result = check_single_cookie(content, proxies)
                 except Exception as e:
@@ -317,9 +337,21 @@ def check():
         return render_template('admin/checking.html',
                                total=len(file_contents),
                                checker_ok=CHECKER_AVAILABLE,
-                               prime_checker_ok=PRIME_CHECKER_AVAILABLE)
+                               prime_checker_ok=PRIME_CHECKER_AVAILABLE,
+                               spotify_checker_ok=SPOTIFY_CHECKER_AVAILABLE,
+                               udemy_checker_ok=UDEMY_CHECKER_AVAILABLE,
+                               crunchyroll_checker_ok=CRUNCHYROLL_CHECKER_AVAILABLE,
+                               claude_checker_ok=CLAUDE_CHECKER_AVAILABLE,
+                               gog_checker_ok=GOG_CHECKER_AVAILABLE)
 
-    return render_template('admin/check.html', checker_ok=CHECKER_AVAILABLE, prime_checker_ok=PRIME_CHECKER_AVAILABLE)
+    return render_template('admin/check.html',
+                           checker_ok=CHECKER_AVAILABLE,
+                           prime_checker_ok=PRIME_CHECKER_AVAILABLE,
+                           spotify_checker_ok=SPOTIFY_CHECKER_AVAILABLE,
+                           udemy_checker_ok=UDEMY_CHECKER_AVAILABLE,
+                           crunchyroll_checker_ok=CRUNCHYROLL_CHECKER_AVAILABLE,
+                           claude_checker_ok=CLAUDE_CHECKER_AVAILABLE,
+                           gog_checker_ok=GOG_CHECKER_AVAILABLE)
 
 @admin_bp.route('/cancel-check', methods=['POST'])
 @login_required

@@ -12,26 +12,26 @@
 </div>
 
 <!-- STAT CARDS -->
-<div class="grid-4 mb-3">
+<div class="grid-4 mb-4">
   <div class="stat-card red">
-    <div class="icon-bg">🍪</div>
     <div class="number text-red">{{ total }}</div>
     <div class="label">Total Accounts</div>
+    <div class="icon-bg">🍪</div>
   </div>
   <div class="stat-card cyan">
-    <div class="icon-bg">👥</div>
     <div class="number text-cyan">{{ total_users }}</div>
     <div class="label">Total Users</div>
+    <div class="icon-bg">👥</div>
   </div>
   <div class="stat-card gold">
-    <div class="icon-bg">⏳</div>
     <div class="number" style="color:var(--gold);">{{ pending_users }}</div>
     <div class="label">Pending Approval</div>
+    <div class="icon-bg">⏳</div>
   </div>
   <div class="stat-card green">
-    <div class="icon-bg">🌍</div>
     <div class="number text-success">{{ country_stats|length }}</div>
     <div class="label">Available Countries</div>
+    <div class="icon-bg">🌍</div>
   </div>
 </div>
 
@@ -63,8 +63,8 @@
     <div class="card-title">🌍 Top Countries</div>
     {% set flags = {'US':'🇺🇸','ID':'🇮🇩','JP':'🇯🇵','KR':'🇰🇷','GB':'🇬🇧','DE':'🇩🇪','FR':'🇫🇷','BR':'🇧🇷','IN':'🇮🇳','AU':'🇦🇺','CA':'🇨🇦','SG':'🇸🇬','MY':'🇲🇾','TH':'🇹🇭','PH':'🇵🇭'} %}
     {% for row in country_stats %}
-    <div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;">
-      <span>{{ flags.get(row.country,'🌍') }} <strong>{{ row.country }}</strong></span>
+    <div class="flex-between" style="padding:12px 0;border-bottom:1px solid var(--border-light);font-size:14px;">
+      <span>{{ flags.get(row.country,'🌍') }} <strong style="margin-left:8px;">{{ row.country }}</strong></span>
       <span class="badge badge-premium">{{ row.count }}</span>
     </div>
     {% else %}

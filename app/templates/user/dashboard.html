@@ -3,40 +3,62 @@
 {% block content %}
 <div class="page-header">
   <h2 class="page-title">🏠 Welcome back, {{ current_user.username }}!</h2>
+  
+  <!-- SERVICE SWITCHER -->
+  <div class="flex gap-2 mt-3 mb-2" style="overflow-x:auto; padding-bottom:10px;">
+    {% set svc_list = [
+      ('netflix', '🔴 Netflix'),
+      ('primevideo', '🔵 Prime Video'),
+      ('spotify', '🟢 Spotify'),
+      ('udemy', '🎓 Udemy'),
+      ('crunchyroll', '🟠 Crunchyroll'),
+      ('claude', '🎨 Claude'),
+      ('gog', '⚙️ GOG.com')
+    ] %}
+    {% for s_key, s_label in svc_list %}
+    <a href="{{ url_for('user.dashboard', service=s_key) }}" 
+       class="btn btn-sm {% if current_service == s_key %}btn-primary{% else %}btn-secondary{% endif %}"
+       style="white-space:nowrap;">
+      {{ s_label }}
+    </a>
+    {% endfor %}
+  </div>
+
   <p class="page-subtitle">
-    {% if current_service == 'netflix' %}🔴 Netflix{% else %}🔵 Prime Video{% endif %}
-    &mdash; <strong>{{ total }}</strong> accounts available &mdash; Select a plan or country below
+    {% set service_icons = {'netflix':'🔴 Netflix','primevideo':'🔵 Prime Video','spotify':'🟢 Spotify','udemy':'🎓 Udemy','crunchyroll':'🟠 Crunchyroll','claude':'🎨 Claude','gog':'⚙️ GOG.com'} %}
+    Active Service: <strong style="margin: 0 6px;">{{ service_icons.get(current_service, current_service|title) }}</strong>
+    &mdash; <strong style="margin: 0 6px;">{{ total }}</strong> accounts available
   </p>
 </div>
 
 <!-- PLAN CARDS -->
-<div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">📦 Filter by Plan <span style="font-size:13px;font-weight:400;color:var(--muted);">— Click a plan to see available countries</span></div>
+<div class="card-title" style="font-size:20px;font-weight:800;margin-bottom:20px;">📦 Filter by Plan <span style="font-size:13px;font-weight:500;color:var(--text-muted);">— Click a plan to see available countries</span></div>
 <div class="grid-auto mb-4">
   {% for p in plans %}
-  <a href="{{ url_for('user.plan_view', plan_key=p.key, service=current_service) }}" class="plan-card" style="border-color:{{ p.color }}22;">
-    <div class="glow" style="background:{{ p.color }};"></div>
+  <a href="{{ url_for('user.plan_view', plan_key=p.key, service=current_service) }}" class="plan-card" style="border-color:{{ p.color }}33;">
+    <div class="glow" style="background:radial-gradient(circle, {{ p.color }}, transparent);"></div>
     <div class="plan-icon">{{ p.icon }}</div>
     <div class="plan-name">{{ p.label }}</div>
     <div class="plan-desc">{{ p.desc }}</div>
     <div class="plan-count" style="color:{{ p.color }};">{{ p.count }}</div>
-    <div style="font-size:11px;color:var(--muted);">accounts available</div>
+    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:1px;margin-top:4px;">accounts available</div>
   </a>
   {% else %}
-  <div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px;">📦 No accounts available yet.</div>
+  <div style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px;">📦 No accounts available yet.</div>
   {% endfor %}
 </div>
 
 <!-- COUNTRY GRID -->
-<div class="card-title" style="font-size:18px;font-weight:700;margin-bottom:16px;">🌍 Filter by Country <span style="font-size:13px;font-weight:400;color:var(--muted);">— Click a country to browse accounts</span></div>
+<div class="card-title" style="font-size:20px;font-weight:800;margin-bottom:20px;">🌍 Filter by Country <span style="font-size:13px;font-weight:500;color:var(--text-muted);">— Click a country to browse accounts</span></div>
 <div class="grid-auto">
   {% for c in countries %}
   <a href="{{ url_for('user.country_view', country_code=c.code, service=current_service) }}" class="country-card">
     <div class="flag">{{ c.flag }}</div>
-    <div class="code" style="font-size:13px;font-weight:700;margin-top:4px;">{{ c.name }}</div>
-    <div class="count" style="font-size:11px;color:var(--muted);margin-top:2px;">{{ c.count }} accounts</div>
+    <div class="code" style="font-size:16px;font-weight:800;margin-top:8px;">{{ c.name }}</div>
+    <div class="count" style="font-size:13px;color:var(--text-muted);margin-top:4px;font-weight:600;">{{ c.count }} accounts</div>
   </a>
   {% else %}
-  <div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px;">🌍 No data available.</div>
+  <div style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px;">🌍 No data available.</div>
   {% endfor %}
 </div>
 {% endblock %}

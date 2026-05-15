@@ -13,7 +13,7 @@
 
 <!-- PLAN FILTER -->
 {% if plans_in_country|length > 1 %}
-<div class="flex gap-2 mb-3" style="flex-wrap:wrap;">
+<div class="flex gap-2 mb-4" style="flex-wrap:wrap;">
   <a href="{{ url_for('user.country_view', country_code=country_code, service=current_service) }}" class="btn btn-sm {% if not plan_filter %}btn-primary{% else %}btn-secondary{% endif %}">All Plans</a>
   {% for p in plans_in_country %}
   <a href="{{ url_for('user.country_view', country_code=country_code, plan=p.plan_key, service=current_service) }}"
@@ -28,40 +28,40 @@
 {% set badge_cls = {'premium':'badge-premium','standard':'badge-standard','standard_with_ads':'badge-standard','basic':'badge-basic','mobile':'badge-mobile','free':'badge-free'} %}
 <div class="grid-3">
   {% for c in pagination.items %}
-  <a href="{{ url_for('user.cookie_detail', cookie_id=c.id) }}" class="plan-card" style="text-decoration:none;">
-    <div class="flex-between mb-2">
+  <a href="{{ url_for('user.cookie_detail', cookie_id=c.id) }}" class="plan-card" style="text-decoration:none;align-items:flex-start;text-align:left;padding:24px;">
+    <div class="flex-between mb-3" style="width:100%;">
       <span class="badge {{ badge_cls.get(c.plan_key,'') }}">{{ c.plan_name or c.plan_key }}</span>
-      <span style="font-size:12px;color:var(--muted);">{{ c.quality or '—' }}</span>
+      <span style="font-size:12px;color:var(--text-muted);font-weight:600;">{{ c.quality or '—' }}</span>
     </div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">📧 {{ c.email or 'Account' }}</div>
-    <div class="flex gap-2" style="font-size:13px;">
+    <div style="font-size:14px;color:var(--text);margin-bottom:12px;font-weight:600;word-break:break-all;">📧 {{ c.email or 'Account' }}</div>
+    <div class="flex gap-2" style="font-size:13px;color:var(--text-muted);font-weight:500;">
       <span>📺 {{ c.max_streams or '?' }} Screens</span>
-      <span style="color:var(--muted);">·</span>
+      <span style="color:var(--text-muted);opacity:0.5;">·</span>
       <span>{{ c.quality or '—' }}</span>
-      <span style="color:var(--muted);">·</span>
+      <span style="color:var(--text-muted);opacity:0.5;">·</span>
       <span>{{ c.plan_price or '—' }}</span>
     </div>
     {% if c.next_billing %}
-    <div style="font-size:12px;color:var(--muted);margin-top:8px;">📅 Renews: {{ c.next_billing }}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:12px;font-weight:500;">📅 Renews: {{ c.next_billing }}</div>
     {% endif %}
-    <div class="btn btn-cyan btn-sm mt-2" style="display:inline-flex;">🔑 View Details</div>
+    <div class="btn btn-cyan btn-sm mt-3" style="display:inline-flex;width:100%;">🔑 View Details</div>
   </a>
   {% else %}
   <div class="card" style="grid-column:1/-1;text-align:center;padding:60px;">
-    <p style="color:var(--muted);">No accounts found for this filter.</p>
+    <p style="color:var(--text-muted);">No accounts found for this filter.</p>
   </div>
   {% endfor %}
 </div>
 
 <!-- PAGINATION -->
 {% if pagination.pages > 1 %}
-<div class="pagination">
+<div class="pagination mt-4">
   {% if pagination.has_prev %}
   <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.prev_num, plan=plan_filter, service=current_service) }}" class="page-btn">←</a>
   {% endif %}
   {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
     {% if p %}<a href="{{ url_for('user.country_view', country_code=country_code, page=p, plan=plan_filter, service=current_service) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
-    {% else %}<span class="page-btn" style="opacity:0.4;">…</span>{% endif %}
+    {% else %}<span class="page-btn" style="opacity:0.4;cursor:default;">…</span>{% endif %}
   {% endfor %}
   {% if pagination.has_next %}
   <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.next_num, plan=plan_filter, service=current_service) }}" class="page-btn">→</a>
