@@ -19,11 +19,12 @@ COPY . .
 
 # Kompilasi aplikasi menggunakan Nuitka
 # --module: Mengompilasi menjadi extension module (.so)
-# --follow-imports: Ikut mengompilasi semua module yang diimport
-# --include-package=app: Memastikan seluruh folder 'app' ikut dikompilasi
+# --follow-import-to=app: Hanya ikuti import yang menuju ke package 'app'
+# --include-package=app: Masukkan seluruh isi folder 'app'
 RUN python -m nuitka --module run.py \
-    --follow-imports \
+    --follow-import-to=app \
     --include-package=app \
+    --nofollow-imports \
     --output-dir=build_output
 
 # Langkah Pembersihan Penting:
