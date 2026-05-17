@@ -62,21 +62,33 @@
   50%       { transform: scale(1.25); }
 }
 /* Push layout down to avoid banner overlap */
-.layout { margin-top: 36px; }
+.layout.has-banner { margin-top: 36px; }
+.mobile-header.has-banner { top: 36px; }
+.sidebar.has-banner { top: 36px; height: calc(100vh - 36px); }
+.sidebar-overlay.has-banner { top: 36px; height: calc(100vh - 36px); }
 </style>
-<div class="layout">
+<div class="layout has-banner">
+  <!-- MOBILE OVERLAY -->
+  <div id="sidebar-overlay" class="sidebar-overlay has-banner"></div>
+
   <!-- MOBILE HEADER -->
-  <div class="mobile-header">
+  <div class="mobile-header has-banner">
     <div class="mobile-logo">🎬 NF Manager</div>
-    <button id="mobile-menu-btn" class="mobile-menu-btn">☰</button>
+    <button id="mobile-menu-btn" class="mobile-menu-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
   </div>
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <h1>🎬 <span class="logo-text">NF Manager</span></h1>
-      <span>Cookie Dashboard</span>
+  <aside class="sidebar has-banner">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <span>🎬</span> <span class="logo-text">NF Manager</span>
+      </div>
+      <div class="sidebar-subtitle">Cookie Dashboard</div>
     </div>
+    
+    <div class="sidebar-scroll">
 
     {% if current_user.is_authenticated %}
     {% if current_user.is_admin %}
@@ -130,16 +142,26 @@
     {% endif %}
     {% endif %}
 
+    </div>
+
     <div class="sidebar-footer">
       {% if current_user.is_authenticated %}
-      <div class="sidebar-user">
-        <div class="sidebar-user-avatar">{{ current_user.username[0]|upper }}</div>
-        <div class="sidebar-user-details">
-          <strong class="user-name">{{ current_user.username }}</strong>
-          <span class="user-role">{% if current_user.is_admin %}<span class="badge-admin">Admin</span>{% else %}<span class="badge-user">User</span>{% endif %}</span>
+      <div class="user-profile">
+        <div class="avatar">{{ current_user.username[0]|upper }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ current_user.username }}</span>
+          <span class="user-role">
+            {% if current_user.is_admin %}
+            <span class="badge badge-admin">Admin</span>
+            {% else %}
+            <span class="badge badge-user">User</span>
+            {% endif %}
+          </span>
         </div>
       </div>
-      <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;">🚪 Logout</a>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary" style="width:100%;justify-content:center;">
+        <span class="icon">🚪</span> <span>Logout</span>
+      </a>
       {% endif %}
     </div>
   </aside>
