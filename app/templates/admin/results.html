@@ -24,8 +24,8 @@
 
 <!-- FILTER -->
 <div class="card mb-4">
-  <form method="GET" class="flex" style="gap:16px;flex-wrap:wrap;align-items:flex-end;">
-    <div class="form-group" style="margin:0;flex:1;min-width:140px;">
+  <form method="GET" class="filter-form">
+    <div class="form-group">
       <label class="form-label">Service Filter</label>
       <select name="service" class="form-control">
         <option value="">All Services</option>
@@ -38,26 +38,28 @@
         <option value="gog" {% if service_filter=='gog' %}selected{% endif %}>GOG.com</option>
       </select>
     </div>
-    <div class="form-group" style="margin:0;flex:1;min-width:160px;">
+    <div class="form-group">
       <label class="form-label">Plan Filter</label>
       <select name="plan" class="form-control">
         <option value="">All Plans</option>
         {% for p in plans %}<option value="{{ p.plan_key }}" {% if plan_filter==p.plan_key %}selected{% endif %}>{{ p.plan_name or p.plan_key }}</option>{% endfor %}
       </select>
     </div>
-    <div class="form-group" style="margin:0;flex:1;min-width:140px;">
+    <div class="form-group">
       <label class="form-label">Country Filter</label>
       <select name="country" class="form-control">
         <option value="">All Countries</option>
         {% for c in countries %}<option value="{{ c.country }}" {% if country_filter==c.country %}selected{% endif %}>{{ c.country }}</option>{% endfor %}
       </select>
     </div>
-    <div class="form-group" style="margin:0;flex:2;min-width:200px;">
+    <div class="form-group search-group">
       <label class="form-label">Search</label>
       <input type="text" name="search" class="form-control" placeholder="Email, name, country..." value="{{ search }}">
     </div>
-    <button type="submit" class="btn btn-primary btn-sm" style="margin-bottom:1px;padding:14px 20px;">🔍 Filter</button>
-    <a href="{{ url_for('admin.results') }}" class="btn btn-secondary btn-sm" style="margin-bottom:1px;padding:14px 20px;">✕ Reset</a>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary btn-sm">🔍 Filter</button>
+      <a href="{{ url_for('admin.results') }}" class="btn btn-secondary btn-sm">✕ Reset</a>
+    </div>
   </form>
 </div>
 
@@ -91,7 +93,7 @@
         <td style="font-size:13px;color:var(--text-muted);">{{ c.next_billing or '—' }}</td>
         <td style="font-size:12px;color:var(--text-muted);">{{ c.checked_at.strftime('%d/%m %H:%M') if c.checked_at else '—' }}</td>
         <td>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
             <a href="{{ url_for('user.cookie_detail', cookie_id=c.id) }}" class="btn btn-cyan btn-xs" title="View Details">👁️</a>
             <form method="POST" action="{{ url_for('admin.delete_cookie', cookie_id=c.id) }}" style="display:inline;" onsubmit="return confirm('Delete this cookie?')">
               <button class="btn btn-danger btn-xs" title="Delete Cookie">🗑️</button>

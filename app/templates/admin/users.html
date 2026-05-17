@@ -23,7 +23,7 @@
           <td style="font-size:13px;color:var(--text-muted);">{{ u.created_at.strftime('%d/%m/%Y %H:%M') if u.created_at else '—' }}</td>
           <td><span class="badge badge-warning">Pending</span></td>
           <td>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <form method="POST" action="{{ url_for('admin.approve_user', user_id=u.id) }}">
                 <button class="btn btn-success btn-xs" title="Approve User">✅ Approve</button>
               </form>

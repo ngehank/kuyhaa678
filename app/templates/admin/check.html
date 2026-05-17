@@ -9,10 +9,10 @@
 <div class="grid-2">
   <div>
     <!-- MODE TABS -->
-    <div class="flex gap-2 mb-4">
-      <button onclick="setMode('files')" id="tab-files" class="btn btn-primary btn-sm">📁 Multi-File</button>
-      <button onclick="setMode('zip')" id="tab-zip" class="btn btn-secondary btn-sm">🗜️ Upload ZIP</button>
-      <button onclick="setMode('folder')" id="tab-folder" class="btn btn-secondary btn-sm">📂 Folder Path</button>
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button onclick="setMode('files')" id="tab-files" class="btn btn-primary btn-sm" style="flex:1;min-width:110px;">📁 Multi-File</button>
+      <button onclick="setMode('zip')" id="tab-zip" class="btn btn-secondary btn-sm" style="flex:1;min-width:110px;">🗜️ Upload ZIP</button>
+      <button onclick="setMode('folder')" id="tab-folder" class="btn btn-secondary btn-sm" style="flex:1;min-width:110px;">📂 Folder Path</button>
     </div>
 
     <div class="card">
@@ -184,7 +184,7 @@ function updateFileList(input) {
 const zone = document.getElementById('uploadZone');
 if (zone) {
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'); );
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
   zone.addEventListener('drop', e => {
     e.preventDefault(); zone.classList.remove('dragover');
     const inp = document.getElementById('fileInput');
