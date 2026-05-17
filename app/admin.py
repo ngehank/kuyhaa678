@@ -34,6 +34,10 @@ admin_bp = Blueprint('admin', __name__)
 # SSE progress queue (global)
 progress_queue = queue.Queue()
 
+# Global job tracker to prevent old threads from interfering with new ones
+current_job_id = 0
+job_lock = threading.Lock()
+
 
 def admin_required(f):
     @wraps(f)
@@ -99,7 +103,7 @@ def _collect_from_folder(folder_path):
 
 # ─── BACKGROUND WORKER ───────────────────────────────────────────────────────
 
-def _run_check_background(flask_app, file_contents, proxies, threads_count, service_type='netflix'):
+def _run_check_background(flask_app, my_job_id, service_type, file_contents, proxies, threads_count):
     """
     Jalankan pengecekan cookies di background thread.
     WAJIB pakai flask_app.app_context() agar bisa akses database.
@@ -118,7 +122,7 @@ def _run_check_background(flask_app, file_contents, proxies, threads_count, serv
 
         def worker():
             while True:
-                if is_cancelled():
+                if current_job_id != my_job_id or is_cancelled():
                     while not task_q.empty():
                         try:
                             task_q.get_nowait()
@@ -239,7 +243,7 @@ def _run_check_background(flask_app, file_contents, proxies, threads_count, serv
             'status': 'done',
         }))
 
-def _run_recheck_background(flask_app):
+def _run_recheck_background(flask_app, my_job_id):
     with flask_app.app_context():
         cookies = CookieResult.query.all()
         results = {'done': 0, 'total': len(cookies), 'success': 0, 'failed': 0, 'error': 0, 'deleted': 0}
@@ -256,7 +260,7 @@ def _run_recheck_background(flask_app):
         def worker():
             with flask_app.app_context():
                 while True:
-                    if is_cancelled():
+                    if current_job_id != my_job_id or is_cancelled():
                         while not task_q.empty():
                             try:
                                 task_q.get_nowait()
@@ -430,11 +434,16 @@ def check():
         flask_app = current_app._get_current_object()
 
         # Reset cancel flag sebelum jalan
+        global current_job_id
+        with job_lock:
+            current_job_id += 1
+            my_job_id = current_job_id
+
         reset_checker_state()
 
         t = threading.Thread(
             target=_run_check_background,
-            args=(flask_app, file_contents, proxies, threads_count, service_type),
+            args=(flask_app, my_job_id, service_type, file_contents, proxies, threads_count),
             daemon=True
         )
         t.start()
@@ -457,10 +466,13 @@ def check():
                            claude_checker_ok=CLAUDE_CHECKER_AVAILABLE,
                            gog_checker_ok=GOG_CHECKER_AVAILABLE)
 
-@admin_bp.route('/cancel-check', methods=['POST'])
+@admin_bp.route('/api/cancel', methods=['POST'])
 @login_required
 @admin_required
-def cancel_check():
+def api_cancel():
+    global current_job_id
+    with job_lock:
+        current_job_id += 1
     cancel_checking()
     return jsonify({"status": "cancelled", "message": "Proses pengecekan dihentikan."})
 
@@ -598,6 +610,11 @@ def recheck_all():
         except queue.Empty:
             break
 
+    global current_job_id
+    with job_lock:
+        current_job_id += 1
+        my_job_id = current_job_id
+
     flask_app = current_app._get_current_object()
     reset_checker_state()
 
@@ -608,7 +625,7 @@ def recheck_all():
 
     t = threading.Thread(
         target=_run_recheck_background,
-        args=(flask_app,),
+        args=(flask_app, my_job_id),
         daemon=True
     )
     t.start()
