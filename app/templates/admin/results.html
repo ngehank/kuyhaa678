@@ -14,6 +14,9 @@
       <form method="POST" action="{{ url_for('admin.delete_all') }}" onsubmit="return confirm('⚠️ WARNING: Are you sure you want to DELETE ALL cookies from the database? This action cannot be undone!')">
         <button class="btn btn-danger btn-sm">🧨 Delete All</button>
       </form>
+      <form method="POST" action="{{ url_for('admin.recheck_all') }}" onsubmit="return confirm('Recheck all cookies? Invalid or expired cookies will be automatically deleted.')">
+        <button class="btn btn-sm" style="background:var(--gold);color:#000;border:none;">🔄 Recheck</button>
+      </form>
       <a href="{{ url_for('admin.check') }}" class="btn btn-primary btn-sm">🔍 New Check</a>
     </div>
   </div>

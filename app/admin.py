@@ -239,6 +239,109 @@ def _run_check_background(flask_app, file_contents, proxies, threads_count, serv
             'status': 'done',
         }))
 
+def _run_recheck_background(flask_app):
+    with flask_app.app_context():
+        cookies = CookieResult.query.all()
+        results = {'done': 0, 'total': len(cookies), 'success': 0, 'failed': 0, 'error': 0, 'deleted': 0}
+        task_q = queue.Queue()
+        for c in cookies:
+            task_q.put((c.id, c.service_type, c.cookie_text))
+            
+        lock = threading.Lock()
+        
+        def sanitize(s):
+            if not isinstance(s, str): return s
+            return s.encode('utf-8', 'surrogatepass').decode('utf-8', 'ignore').replace('\x00', '')
+            
+        def worker():
+            while True:
+                if is_cancelled():
+                    while not task_q.empty():
+                        try:
+                            task_q.get_nowait()
+                            task_q.task_done()
+                        except queue.Empty:
+                            break
+                    break
+                    
+                try:
+                    c_id, s_type, c_text = task_q.get_nowait()
+                except queue.Empty:
+                    break
+                try:
+                    if s_type == 'primevideo':
+                        res = check_single_prime_cookie(c_text, [])
+                    elif s_type == 'spotify':
+                        res = check_single_spotify_cookie(c_text, [])
+                    elif s_type == 'udemy':
+                        res = check_single_udemy_cookie(c_text, [])
+                    elif s_type == 'crunchyroll':
+                        res = check_single_crunchyroll_cookie(c_text, [])
+                    elif s_type == 'claude':
+                        res = check_single_claude_cookie(c_text, [])
+                    elif s_type == 'gog':
+                        res = check_single_gog_cookie(c_text, [])
+                    else:
+                        res = check_single_cookie(c_text, [])
+                except Exception as e:
+                    res = {'status': 'error', 'error_reason': str(e)}
+
+                with lock:
+                    if res.get('status') == 'cancelled':
+                        task_q.task_done()
+                        continue
+                        
+                    results['done'] += 1
+                    status = res.get('status', 'error')
+                    
+                    try:
+                        cookie = CookieResult.query.get(c_id)
+                        if cookie:
+                            if status in ('success', 'free'):
+                                results['success'] += 1
+                                cookie.plan_key = sanitize(res.get('plan_key', cookie.plan_key))
+                                cookie.plan_name = sanitize(res.get('plan_name', cookie.plan_name))
+                                cookie.country = sanitize(res.get('country', cookie.country))
+                                cookie.is_on_hold = bool(res.get('is_on_hold', cookie.is_on_hold))
+                                cookie.email = sanitize(res.get('email') or cookie.email)
+                                cookie.checked_at = datetime.utcnow()
+                            else:
+                                results['failed'] += 1
+                                results['deleted'] += 1
+                                db.session.delete(cookie)
+                            db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        print(f"Error updating cookie {c_id}: {e}")
+                        results['error'] += 1
+                        
+                    progress_queue.put(json.dumps({
+                        'done': results['done'],
+                        'total': results['total'],
+                        'success': results['success'],
+                        'failed': results['failed'],
+                        'error': results['error'],
+                        'current': f"ID {c_id}",
+                        'status': status,
+                    }))
+                task_q.task_done()
+                
+        n_threads = min(10, max(1, len(cookies)))
+        thread_list = [threading.Thread(target=worker, daemon=True) for _ in range(n_threads)]
+        for t in thread_list: t.start()
+        for t in thread_list: t.join()
+        
+        progress_queue.put(json.dumps({
+            'done': results['total'],
+            'total': results['total'],
+            'success': results['success'],
+            'failed': results['failed'],
+            'error': results['error'],
+            'saved': results['success'],
+            'current': 'DONE',
+            'status': 'done',
+        }))
+
 
 # ─── ROUTES ──────────────────────────────────────────────────────────────────
 
@@ -482,6 +585,33 @@ def delete_all():
         db.session.rollback()
         flash(f'Failed to delete data: {e}', 'danger')
     return redirect(url_for('admin.results'))
+
+@admin_bp.route('/recheck-all', methods=['POST'])
+@login_required
+@admin_required
+def recheck_all():
+    # Kosongkan queue lama
+    while not progress_queue.empty():
+        try:
+            progress_queue.get_nowait()
+        except queue.Empty:
+            break
+
+    flask_app = current_app._get_current_object()
+    reset_checker_state()
+
+    total = CookieResult.query.count()
+    if total == 0:
+        flash('No cookies to check.', 'warning')
+        return redirect(url_for('admin.results'))
+
+    t = threading.Thread(
+        target=_run_recheck_background,
+        args=(flask_app,),
+        daemon=True
+    )
+    t.start()
+    return render_template('admin/checking.html', total=total)
 
 
 @admin_bp.route('/users')
