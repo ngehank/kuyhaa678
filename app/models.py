@@ -46,3 +46,21 @@ class CookieResult(db.Model):
     # Metadata
     checked_at = db.Column(db.DateTime, default=datetime.utcnow)
     source_file = db.Column(db.String(255))
+
+
+class UserCookieClaim(db.Model):
+    """
+    Mencatat cookie mana yang sudah pernah di-generate/di-claim oleh user tertentu.
+    Sehingga setiap generate berikutnya selalu memberikan cookie yang BERBEDA.
+    """
+    __tablename__ = 'user_cookie_claims'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    cookie_id = db.Column(db.Integer, db.ForeignKey('cookie_results.id', ondelete='CASCADE'), nullable=False, index=True)
+    service_type = db.Column(db.String(20), nullable=False, index=True)
+    claimed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Satu user tidak bisa claim cookie yang sama dua kali
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'cookie_id', name='uq_user_cookie_claim'),
+    )

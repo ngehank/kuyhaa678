@@ -212,7 +212,7 @@
 
 
   {# ══ KOLOM KANAN: Info akun (tersembunyi sampai generate selesai) ══ #}
-  <div>
+  <div class="gen-right-col">
     <div class="card info-locked-card" id="infoCard">
       {# Overlay kunci (sebelum generate) #}
       <div class="info-lock-overlay" id="infoLockOverlay">
@@ -293,7 +293,8 @@
 {# ─── Hidden data untuk JS ─── #}
 <div id="jsData"
      data-service="{{ current_service }}"
-     data-cookie-id="{{ cookie.id if cookie else '' }}"
+     data-country="{{ country_code }}"
+     data-plan="{{ plan_filter }}"
      style="display:none;">
 </div>
 
@@ -301,9 +302,10 @@
 
 {% block scripts %}
 <script>
-const svc     = document.getElementById('jsData')?.dataset.service || 'netflix';
-const cookieId = document.getElementById('jsData')?.dataset.cookieId || '';
-const SECONDS = 15;
+const svc      = document.getElementById('jsData')?.dataset.service || 'netflix';
+const country  = document.getElementById('jsData')?.dataset.country || '';
+const planKey  = document.getElementById('jsData')?.dataset.plan || '';
+const SECONDS  = 15;
 let countdownActive = false;
 
 function getCsrf() {
@@ -318,7 +320,6 @@ function startGeneration() {
   document.getElementById('stepInit').style.display = 'none';
   document.getElementById('stepCountdown').style.display = 'block';
 
-  // Animasi ikon countdown
   const icon = document.getElementById('cdIcon');
   icon.style.animation = 'spin-slow 2s linear infinite';
   icon.style.display = 'inline-block';
@@ -327,19 +328,27 @@ function startGeneration() {
   const numEl = document.getElementById('cdNumber');
   const bar   = document.getElementById('cdBar');
 
-  // Animasi progress bar
   setTimeout(() => {
     bar.style.transition = `width ${SECONDS}s linear`;
     bar.style.width = '100%';
   }, 50);
 
-  // Fetch langsung mulai di background (Netflix)
-  let fetchPromise = null;
-  if (svc === 'netflix' && cookieId) {
-    fetchPromise = fetch(`/user/get-token/${cookieId}`, {
-      method: 'POST',
-      headers: { 'X-CSRFToken': getCsrf(), 'Content-Type': 'application/json' }
-    }).then(r => r.json());
+  // ── Langkah 1: Panggil api_country_data untuk dapatkan cookie BARU (dan catat claim) ──
+  let apiUrl = `/user/api/country/${country}?service=${svc}`;
+  if (planKey) apiUrl += `&plan=${planKey}`;
+
+  let cookieDataPromise = fetch(apiUrl).then(r => r.json());
+
+  // ── Langkah 2: Jika Netflix, langsung mulai fetch token di background setelah dapat cookie_id ──
+  let tokenPromise = null;
+  if (svc === 'netflix') {
+    tokenPromise = cookieDataPromise.then(cookieData => {
+      if (cookieData.error || !cookieData.id) throw new Error(cookieData.error || 'Cookie tidak ditemukan');
+      return fetch(`/user/get-token/${cookieData.id}`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrf(), 'Content-Type': 'application/json' }
+      }).then(r => r.json());
+    });
   }
 
   const timer = setInterval(() => {
@@ -351,32 +360,58 @@ function startGeneration() {
       icon.style.animation = '';
       document.getElementById('stepCountdown').style.display = 'none';
       document.getElementById('stepResult').style.display = 'block';
-
-      // Unlock info panel
       unlockInfo();
 
       if (svc === 'netflix') {
-        // Tunggu fetch selesai lalu tampilkan
-        if (fetchPromise) {
-          fetchPromise.then(data => {
+        if (tokenPromise) {
+          tokenPromise.then(data => {
             if (data.success) {
               document.getElementById('tokenExpiry').textContent = data.expires_at || 'Unknown';
-              document.getElementById('pcLink').href = data.pc_url;
-              document.getElementById('pcUrl').textContent = data.pc_url;
-              document.getElementById('mobileLink').href = data.mobile_url;
+              document.getElementById('pcLink').href  = data.pc_url;
+              document.getElementById('pcUrl').textContent    = data.pc_url;
+              document.getElementById('mobileLink').href      = data.mobile_url;
               document.getElementById('mobileUrl').textContent = data.mobile_url;
               document.getElementById('tokenOk').style.display = 'block';
             } else {
               showTokenError(data.error || 'Gagal generate token');
             }
-          }).catch(e => showTokenError('Network error: ' + e.message));
+          }).catch(e => showTokenError('Error: ' + e.message));
         } else {
-          showTokenError('Cookie ID tidak ditemukan');
+          showTokenError('Token promise tidak tersedia');
         }
+      } else {
+        // Non-Netflix: tampilkan raw cookies dari API response
+        cookieDataPromise.then(d => {
+          if (d.error) { showTokenError(d.error); return; }
+          const box = document.getElementById('rawCookieBox');
+          if (box) box.value = d.cookie_text || '';
+          // Update info panel jika ada
+          updateInfoPanel(d);
+        }).catch(e => showTokenError('Error: ' + e.message));
       }
-      // Non-Netflix: cookie sudah di DOM, langsung tampil
     }
   }, 1000);
+}
+
+function updateInfoPanel(d) {
+  // Update label info di panel kanan jika tersedia
+  const rows = {
+    'info-email':     d.email,
+    'info-account':   d.account_name,
+    'info-quality':   d.quality,
+    'info-screens':   d.max_streams ? d.max_streams + ' Screens' : null,
+    'info-price':     d.plan_price,
+    'info-billing':   d.next_billing,
+    'info-since':     d.member_since,
+    'info-payment':   d.payment_method,
+    'info-extra':     d.extra_members,
+    'info-membership':d.membership_status,
+    'info-profiles':  d.profiles,
+  };
+  Object.entries(rows).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el && val) { el.textContent = val; el.closest('.info-row')?.style.setProperty('display','flex'); }
+  });
 }
 
 function showTokenError(msg) {
@@ -390,11 +425,12 @@ function retryGen() {
   countdownActive = false;
   document.getElementById('tokenErr').style.display = 'none';
   document.getElementById('btnRetry').style.display = 'none';
-  document.getElementById('tokenOk').style.display = 'none';
+  const tokenOk = document.getElementById('tokenOk');
+  if (tokenOk) tokenOk.style.display = 'none';
   document.getElementById('stepResult').style.display = 'none';
-  // Re-lock
+  // Re-lock info panel
   const overlay = document.getElementById('infoLockOverlay');
-  if (overlay) { overlay.style.display = 'flex'; }
+  if (overlay) { overlay.style.opacity = '1'; overlay.style.display = 'flex'; }
   document.getElementById('stepInit').style.display = 'block';
   document.getElementById('cdBar').style.transition = 'none';
   document.getElementById('cdBar').style.width = '0%';
@@ -446,39 +482,42 @@ function parseNetscape(text) {
 </script>
 
 <style>
-/* ── Generate page layout ── */
+/* ── Layout khusus halaman generate ── */
 .gen-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 20px;
   align-items: start;
+  width: 100%;
+}
+.gen-right-col {
+  position: sticky;
+  top: calc(32px + var(--nav-h) + 16px);
+  min-width: 0;
 }
 .gen-card { padding: 28px 24px; }
 
-/* Info card dengan lock overlay */
-.info-locked-card { position: relative; overflow: visible; }
+/* Info card lock overlay */
+.info-locked-card { position: relative; overflow: hidden; min-height: 180px; }
 .info-lock-overlay {
-  position: absolute; inset: 0; border-radius: var(--radius-md);
+  position: absolute; inset: 0;
   background: rgba(6,6,8,0.88);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center;
   z-index: 10; border-radius: inherit;
+  transition: opacity 0.6s ease;
 }
 
 @keyframes spin-slow { to { transform: rotate(360deg); } }
 
-/* ── Mobile: stack layout ── */
+/* ── Responsive ── */
 @media (max-width: 900px) {
-  .gen-layout {
-    grid-template-columns: 1fr;
-  }
-  .gen-layout > div:last-child {
-    order: -1; /* info card muncul dulu di mobile */
-  }
+  .gen-layout { grid-template-columns: 1fr; }
+  .gen-right-col { position: static; order: -1; }
+  .gen-card { padding: 20px 16px; }
 }
 @media (max-width: 480px) {
-  .gen-card { padding: 20px 16px; }
+  .gen-card { padding: 16px 12px; }
 }
 </style>
 {% endblock %}

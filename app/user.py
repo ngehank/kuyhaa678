@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
-from .models import CookieResult
+from .models import CookieResult, UserCookieClaim
 from . import db
 from sqlalchemy import func
 
@@ -44,158 +44,60 @@ PLAN_META = {
 # Comprehensive country data: code -> (flag_emoji, full_english_name)
 COUNTRY_DATA = {
     # Americas
-    'US': ('🇺🇸', 'United States'),
-    'CA': ('🇨🇦', 'Canada'),
-    'MX': ('🇲🇽', 'Mexico'),
-    'BR': ('🇧🇷', 'Brazil'),
-    'AR': ('🇦🇷', 'Argentina'),
-    'CL': ('🇨🇱', 'Chile'),
-    'CO': ('🇨🇴', 'Colombia'),
-    'PE': ('🇵🇪', 'Peru'),
-    'VE': ('🇻🇪', 'Venezuela'),
-    'EC': ('🇪🇨', 'Ecuador'),
-    'BO': ('🇧🇴', 'Bolivia'),
-    'PY': ('🇵🇾', 'Paraguay'),
-    'UY': ('🇺🇾', 'Uruguay'),
-    'DO': ('🇩🇴', 'Dominican Republic'),
-    'GT': ('🇬🇹', 'Guatemala'),
-    'HN': ('🇭🇳', 'Honduras'),
-    'SV': ('🇸🇻', 'El Salvador'),
-    'NI': ('🇳🇮', 'Nicaragua'),
-    'CR': ('🇨🇷', 'Costa Rica'),
-    'PA': ('🇵🇦', 'Panama'),
-    'JM': ('🇯🇲', 'Jamaica'),
-    'TT': ('🇹🇹', 'Trinidad and Tobago'),
-    'CU': ('🇨🇺', 'Cuba'),
-    'HT': ('🇭🇹', 'Haiti'),
-    'BB': ('🇧🇧', 'Barbados'),
-    'GY': ('🇬🇾', 'Guyana'),
-    'SR': ('🇸🇷', 'Suriname'),
+    'US': ('🇺🇸', 'United States'), 'CA': ('🇨🇦', 'Canada'), 'MX': ('🇲🇽', 'Mexico'),
+    'BR': ('🇧🇷', 'Brazil'), 'AR': ('🇦🇷', 'Argentina'), 'CL': ('🇨🇱', 'Chile'),
+    'CO': ('🇨🇴', 'Colombia'), 'PE': ('🇵🇪', 'Peru'), 'VE': ('🇻🇪', 'Venezuela'),
+    'EC': ('🇪🇨', 'Ecuador'), 'BO': ('🇧🇴', 'Bolivia'), 'PY': ('🇵🇾', 'Paraguay'),
+    'UY': ('🇺🇾', 'Uruguay'), 'DO': ('🇩🇴', 'Dominican Republic'), 'GT': ('🇬🇹', 'Guatemala'),
+    'HN': ('🇭🇳', 'Honduras'), 'SV': ('🇸🇻', 'El Salvador'), 'NI': ('🇳🇮', 'Nicaragua'),
+    'CR': ('🇨🇷', 'Costa Rica'), 'PA': ('🇵🇦', 'Panama'), 'JM': ('🇯🇲', 'Jamaica'),
+    'TT': ('🇹🇹', 'Trinidad and Tobago'), 'CU': ('🇨🇺', 'Cuba'), 'HT': ('🇭🇹', 'Haiti'),
+    'BB': ('🇧🇧', 'Barbados'), 'GY': ('🇬🇾', 'Guyana'), 'SR': ('🇸🇷', 'Suriname'),
     # Europe
-    'GB': ('🇬🇧', 'United Kingdom'),
-    'DE': ('🇩🇪', 'Germany'),
-    'FR': ('🇫🇷', 'France'),
-    'IT': ('🇮🇹', 'Italy'),
-    'ES': ('🇪🇸', 'Spain'),
-    'NL': ('🇳🇱', 'Netherlands'),
-    'BE': ('🇧🇪', 'Belgium'),
-    'SE': ('🇸🇪', 'Sweden'),
-    'NO': ('🇳🇴', 'Norway'),
-    'DK': ('🇩🇰', 'Denmark'),
-    'FI': ('🇫🇮', 'Finland'),
-    'PL': ('🇵🇱', 'Poland'),
-    'PT': ('🇵🇹', 'Portugal'),
-    'GR': ('🇬🇷', 'Greece'),
-    'AT': ('🇦🇹', 'Austria'),
-    'CH': ('🇨🇭', 'Switzerland'),
-    'IE': ('🇮🇪', 'Ireland'),
-    'CZ': ('🇨🇿', 'Czech Republic'),
-    'HU': ('🇭🇺', 'Hungary'),
-    'RO': ('🇷🇴', 'Romania'),
-    'BG': ('🇧🇬', 'Bulgaria'),
-    'SK': ('🇸🇰', 'Slovakia'),
-    'SI': ('🇸🇮', 'Slovenia'),
-    'HR': ('🇭🇷', 'Croatia'),
-    'RS': ('🇷🇸', 'Serbia'),
-    'UA': ('🇺🇦', 'Ukraine'),
-    'RU': ('🇷🇺', 'Russia'),
-    'AL': ('🇦🇱', 'Albania'),
-    'MK': ('🇲🇰', 'North Macedonia'),
-    'LT': ('🇱🇹', 'Lithuania'),
-    'LV': ('🇱🇻', 'Latvia'),
-    'EE': ('🇪🇪', 'Estonia'),
-    'LU': ('🇱🇺', 'Luxembourg'),
-    'MT': ('🇲🇹', 'Malta'),
-    'IS': ('🇮🇸', 'Iceland'),
-    'BY': ('🇧🇾', 'Belarus'),
-    'MD': ('🇲🇩', 'Moldova'),
-    'BA': ('🇧🇦', 'Bosnia and Herzegovina'),
-    'ME': ('🇲🇪', 'Montenegro'),
-    'XK': ('🇽🇰', 'Kosovo'),
-    'CY': ('🇨🇾', 'Cyprus'),
+    'GB': ('🇬🇧', 'United Kingdom'), 'DE': ('🇩🇪', 'Germany'), 'FR': ('🇫🇷', 'France'),
+    'IT': ('🇮🇹', 'Italy'), 'ES': ('🇪🇸', 'Spain'), 'NL': ('🇳🇱', 'Netherlands'),
+    'BE': ('🇧🇪', 'Belgium'), 'SE': ('🇸🇪', 'Sweden'), 'NO': ('🇳🇴', 'Norway'),
+    'DK': ('🇩🇰', 'Denmark'), 'FI': ('🇫🇮', 'Finland'), 'PL': ('🇵🇱', 'Poland'),
+    'PT': ('🇵🇹', 'Portugal'), 'GR': ('🇬🇷', 'Greece'), 'AT': ('🇦🇹', 'Austria'),
+    'CH': ('🇨🇭', 'Switzerland'), 'IE': ('🇮🇪', 'Ireland'), 'CZ': ('🇨🇿', 'Czech Republic'),
+    'HU': ('🇭🇺', 'Hungary'), 'RO': ('🇷🇴', 'Romania'), 'BG': ('🇧🇬', 'Bulgaria'),
+    'SK': ('🇸🇰', 'Slovakia'), 'SI': ('🇸🇮', 'Slovenia'), 'HR': ('🇭🇷', 'Croatia'),
+    'RS': ('🇷🇸', 'Serbia'), 'UA': ('🇺🇦', 'Ukraine'), 'RU': ('🇷🇺', 'Russia'),
+    'AL': ('🇦🇱', 'Albania'), 'MK': ('🇲🇰', 'North Macedonia'), 'LT': ('🇱🇹', 'Lithuania'),
+    'LV': ('🇱🇻', 'Latvia'), 'EE': ('🇪🇪', 'Estonia'), 'LU': ('🇱🇺', 'Luxembourg'),
+    'MT': ('🇲🇹', 'Malta'), 'IS': ('🇮🇸', 'Iceland'), 'BY': ('🇧🇾', 'Belarus'),
+    'MD': ('🇲🇩', 'Moldova'), 'BA': ('🇧🇦', 'Bosnia and Herzegovina'),
+    'ME': ('🇲🇪', 'Montenegro'), 'XK': ('🇽🇰', 'Kosovo'), 'CY': ('🇨🇾', 'Cyprus'),
     # Asia and Pacific
-    'CN': ('🇨🇳', 'China'),
-    'JP': ('🇯🇵', 'Japan'),
-    'KR': ('🇰🇷', 'South Korea'),
-    'IN': ('🇮🇳', 'India'),
-    'ID': ('🇮🇩', 'Indonesia'),
-    'PH': ('🇵🇭', 'Philippines'),
-    'VN': ('🇻🇳', 'Vietnam'),
-    'TH': ('🇹🇭', 'Thailand'),
-    'MY': ('🇲🇾', 'Malaysia'),
-    'SG': ('🇸🇬', 'Singapore'),
-    'HK': ('🇭🇰', 'Hong Kong'),
-    'TW': ('🇹🇼', 'Taiwan'),
-    'AU': ('🇦🇺', 'Australia'),
-    'NZ': ('🇳🇿', 'New Zealand'),
-    'PK': ('🇵🇰', 'Pakistan'),
-    'BD': ('🇧🇩', 'Bangladesh'),
-    'LK': ('🇱🇰', 'Sri Lanka'),
-    'NP': ('🇳🇵', 'Nepal'),
-    'MM': ('🇲🇲', 'Myanmar'),
-    'KH': ('🇰🇭', 'Cambodia'),
-    'MN': ('🇲🇳', 'Mongolia'),
-    'BN': ('🇧🇳', 'Brunei'),
-    'FJ': ('🇫🇯', 'Fiji'),
-    'PG': ('🇵🇬', 'Papua New Guinea'),
-    'AF': ('🇦🇫', 'Afghanistan'),
-    'GE': ('🇬🇪', 'Georgia'),
-    'AM': ('🇦🇲', 'Armenia'),
-    'AZ': ('🇦🇿', 'Azerbaijan'),
-    'KZ': ('🇰🇿', 'Kazakhstan'),
-    'UZ': ('🇺🇿', 'Uzbekistan'),
+    'CN': ('🇨🇳', 'China'), 'JP': ('🇯🇵', 'Japan'), 'KR': ('🇰🇷', 'South Korea'),
+    'IN': ('🇮🇳', 'India'), 'ID': ('🇮🇩', 'Indonesia'), 'PH': ('🇵🇭', 'Philippines'),
+    'VN': ('🇻🇳', 'Vietnam'), 'TH': ('🇹🇭', 'Thailand'), 'MY': ('🇲🇾', 'Malaysia'),
+    'SG': ('🇸🇬', 'Singapore'), 'HK': ('🇭🇰', 'Hong Kong'), 'TW': ('🇹🇼', 'Taiwan'),
+    'AU': ('🇦🇺', 'Australia'), 'NZ': ('🇳🇿', 'New Zealand'), 'PK': ('🇵🇰', 'Pakistan'),
+    'BD': ('🇧🇩', 'Bangladesh'), 'LK': ('🇱🇰', 'Sri Lanka'), 'NP': ('🇳🇵', 'Nepal'),
+    'MM': ('🇲🇲', 'Myanmar'), 'KH': ('🇰🇭', 'Cambodia'), 'MN': ('🇲🇳', 'Mongolia'),
+    'BN': ('🇧🇳', 'Brunei'), 'FJ': ('🇫🇯', 'Fiji'), 'PG': ('🇵🇬', 'Papua New Guinea'),
+    'AF': ('🇦🇫', 'Afghanistan'), 'GE': ('🇬🇪', 'Georgia'), 'AM': ('🇦🇲', 'Armenia'),
+    'AZ': ('🇦🇿', 'Azerbaijan'), 'KZ': ('🇰🇿', 'Kazakhstan'), 'UZ': ('🇺🇿', 'Uzbekistan'),
     # Middle East
-    'SA': ('🇸🇦', 'Saudi Arabia'),
-    'AE': ('🇦🇪', 'United Arab Emirates'),
-    'QA': ('🇶🇦', 'Qatar'),
-    'KW': ('🇰🇼', 'Kuwait'),
-    'BH': ('🇧🇭', 'Bahrain'),
-    'OM': ('🇴🇲', 'Oman'),
-    'JO': ('🇯🇴', 'Jordan'),
-    'LB': ('🇱🇧', 'Lebanon'),
-    'IQ': ('🇮🇶', 'Iraq'),
-    'IR': ('🇮🇷', 'Iran'),
-    'IL': ('🇮🇱', 'Israel'),
-    'TR': ('🇹🇷', 'Turkey'),
-    'SY': ('🇸🇾', 'Syria'),
-    'YE': ('🇾🇪', 'Yemen'),
+    'SA': ('🇸🇦', 'Saudi Arabia'), 'AE': ('🇦🇪', 'United Arab Emirates'), 'QA': ('🇶🇦', 'Qatar'),
+    'KW': ('🇰🇼', 'Kuwait'), 'BH': ('🇧🇭', 'Bahrain'), 'OM': ('🇴🇲', 'Oman'),
+    'JO': ('🇯🇴', 'Jordan'), 'LB': ('🇱🇧', 'Lebanon'), 'IQ': ('🇮🇶', 'Iraq'),
+    'IR': ('🇮🇷', 'Iran'), 'IL': ('🇮🇱', 'Israel'), 'TR': ('🇹🇷', 'Turkey'),
+    'SY': ('🇸🇾', 'Syria'), 'YE': ('🇾🇪', 'Yemen'),
     # Africa
-    'ZA': ('🇿🇦', 'South Africa'),
-    'NG': ('🇳🇬', 'Nigeria'),
-    'EG': ('🇪🇬', 'Egypt'),
-    'KE': ('🇰🇪', 'Kenya'),
-    'ET': ('🇪🇹', 'Ethiopia'),
-    'GH': ('🇬🇭', 'Ghana'),
-    'MA': ('🇲🇦', 'Morocco'),
-    'DZ': ('🇩🇿', 'Algeria'),
-    'TN': ('🇹🇳', 'Tunisia'),
-    'CI': ('🇨🇮', 'Ivory Coast'),
-    'TZ': ('🇹🇿', 'Tanzania'),
-    'CM': ('🇨🇲', 'Cameroon'),
-    'AO': ('🇦🇴', 'Angola'),
-    'MZ': ('🇲🇿', 'Mozambique'),
-    'ZM': ('🇿🇲', 'Zambia'),
-    'ZW': ('🇿🇼', 'Zimbabwe'),
-    'SN': ('🇸🇳', 'Senegal'),
-    'TG': ('🇹🇬', 'Togo'),
-    'BF': ('🇧🇫', 'Burkina Faso'),
-    'ML': ('🇲🇱', 'Mali'),
-    'MG': ('🇲🇬', 'Madagascar'),
-    'BW': ('🇧🇼', 'Botswana'),
-    'NA': ('🇳🇦', 'Namibia'),
-    'RW': ('🇷🇼', 'Rwanda'),
-    'UG': ('🇺🇬', 'Uganda'),
-    'SD': ('🇸🇩', 'Sudan'),
-    'GA': ('🇬🇦', 'Gabon'),
-    'CD': ('🇨🇩', 'DR Congo'),
-    'SC': ('🇸🇨', 'Seychelles'),
-    'TD': ('🇹🇩', 'Chad'),
-    'LY': ('🇱🇾', 'Libya'),
-    'MU': ('🇲🇺', 'Mauritius'),
-    'CV': ('🇨🇻', 'Cape Verde'),
-    'YT': ('🇾🇹', 'Mayotte'),
-    'MW': ('🇲🇼', 'Malawi'),
-    'BI': ('🇧🇮', 'Burundi'),
+    'ZA': ('🇿🇦', 'South Africa'), 'NG': ('🇳🇬', 'Nigeria'), 'EG': ('🇪🇬', 'Egypt'),
+    'KE': ('🇰🇪', 'Kenya'), 'ET': ('🇪🇹', 'Ethiopia'), 'GH': ('🇬🇭', 'Ghana'),
+    'MA': ('🇲🇦', 'Morocco'), 'DZ': ('🇩🇿', 'Algeria'), 'TN': ('🇹🇳', 'Tunisia'),
+    'CI': ('🇨🇮', 'Ivory Coast'), 'TZ': ('🇹🇿', 'Tanzania'), 'CM': ('🇨🇲', 'Cameroon'),
+    'AO': ('🇦🇴', 'Angola'), 'MZ': ('🇲🇿', 'Mozambique'), 'ZM': ('🇿🇲', 'Zambia'),
+    'ZW': ('🇿🇼', 'Zimbabwe'), 'SN': ('🇸🇳', 'Senegal'), 'TG': ('🇹🇬', 'Togo'),
+    'BF': ('🇧🇫', 'Burkina Faso'), 'ML': ('🇲🇱', 'Mali'), 'MG': ('🇲🇬', 'Madagascar'),
+    'BW': ('🇧🇼', 'Botswana'), 'NA': ('🇳🇦', 'Namibia'), 'RW': ('🇷🇼', 'Rwanda'),
+    'UG': ('🇺🇬', 'Uganda'), 'SD': ('🇸🇩', 'Sudan'), 'GA': ('🇬🇦', 'Gabon'),
+    'CD': ('🇨🇩', 'DR Congo'), 'SC': ('🇸🇨', 'Seychelles'), 'TD': ('🇹🇩', 'Chad'),
+    'LY': ('🇱🇾', 'Libya'), 'MU': ('🇲🇺', 'Mauritius'), 'CV': ('🇨🇻', 'Cape Verde'),
+    'YT': ('🇾🇹', 'Mayotte'), 'MW': ('🇲🇼', 'Malawi'), 'BI': ('🇧🇮', 'Burundi'),
     'SO': ('🇸🇴', 'Somalia'),
     # Global
     'XX': ('🌐', 'Global / Unknown'),
@@ -205,13 +107,15 @@ COUNTRY_DATA = {
 
 def get_flag(country_code):
     code = (country_code or 'XX').upper()
-    if code == 'UNKNOWN': code = 'XX'
+    if code == 'UNKNOWN':
+        code = 'XX'
     return COUNTRY_DATA.get(code, ('🌍', code))[0]
 
 
 def get_country_name(country_code):
     code = (country_code or 'XX').upper()
-    if code == 'UNKNOWN': code = 'XX'
+    if code == 'UNKNOWN':
+        code = 'XX'
     return COUNTRY_DATA.get(code, ('🌍', code))[1]
 
 
@@ -220,7 +124,7 @@ def get_country_name(country_code):
 @user_approved_required
 def dashboard():
     service = request.args.get('service', 'netflix')
-    
+
     # Plan cards with counts
     plan_data = db.session.query(
         CookieResult.plan_key,
@@ -247,10 +151,14 @@ def dashboard():
     country_data = db.session.query(
         CookieResult.country,
         func.count(CookieResult.id).label('count')
-    ).filter(CookieResult.service_type == service).group_by(CookieResult.country).order_by(func.count(CookieResult.id).desc()).all()
+    ).filter(CookieResult.service_type == service).group_by(CookieResult.country).order_by(
+        func.count(CookieResult.id).desc()
+    ).all()
 
-    countries = [{'code': r.country, 'flag': get_flag(r.country), 'name': get_country_name(r.country), 'count': r.count}
-                 for r in country_data]
+    countries = [
+        {'code': r.country, 'flag': get_flag(r.country), 'name': get_country_name(r.country), 'count': r.count}
+        for r in country_data
+    ]
 
     total = CookieResult.query.filter(CookieResult.service_type == service).count()
     return render_template('user/dashboard.html', plans=plans, countries=countries, total=total, current_service=service)
@@ -267,14 +175,18 @@ def plan_view(plan_key):
     country_data = db.session.query(
         CookieResult.country,
         func.count(CookieResult.id).label('count')
-    ).filter(CookieResult.plan_key == plan_key, CookieResult.service_type == service).group_by(CookieResult.country).order_by(
-        func.count(CookieResult.id).desc()
-    ).all()
+    ).filter(
+        CookieResult.plan_key == plan_key,
+        CookieResult.service_type == service
+    ).group_by(CookieResult.country).order_by(func.count(CookieResult.id).desc()).all()
 
-    countries = [{'code': r.country, 'flag': get_flag(r.country), 'name': get_country_name(r.country), 'count': r.count}
-                 for r in country_data]
+    countries = [
+        {'code': r.country, 'flag': get_flag(r.country), 'name': get_country_name(r.country), 'count': r.count}
+        for r in country_data
+    ]
 
-    return render_template('user/plan.html', plan_key=plan_key, plan_meta=plan_meta, countries=countries, current_service=service)
+    return render_template('user/plan.html', plan_key=plan_key, plan_meta=plan_meta,
+                           countries=countries, current_service=service)
 
 
 @user_bp.route('/country/<country_code>')
@@ -287,26 +199,39 @@ def country_view(country_code):
 
     country_code_normalized = country_code.strip()
     if country_code_normalized.upper() == 'UNKNOWN':
-        query = CookieResult.query.filter(
+        base_query = CookieResult.query.filter(
             CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx']),
             CookieResult.service_type == service
         )
     else:
-        query = CookieResult.query.filter(
+        base_query = CookieResult.query.filter(
             CookieResult.country == country_code_normalized,
             CookieResult.service_type == service
         )
 
     if plan_filter:
-        query = query.filter(CookieResult.plan_key == plan_filter)
+        base_query = base_query.filter(CookieResult.plan_key == plan_filter)
 
-    # Otomatis pilih akun terbaik (checked paling baru)
-    selected_cookie = query.order_by(CookieResult.checked_at.desc()).first()
+    total_available = base_query.count()
 
-    # Hitung total untuk info
-    total_available = query.count()
+    # Hitung berapa yang sudah pernah di-claim user ini (untuk display info)
+    from sqlalchemy import select as sa_select
+    claimed_ids_sq = sa_select(UserCookieClaim.cookie_id).where(
+        UserCookieClaim.user_id == current_user.id
+    ).scalar_subquery()
 
-    # Plan info untuk display
+    unclaimed_count = base_query.filter(CookieResult.id.notin_(claimed_ids_sq)).count()
+
+    # Pilih satu cookie yang BELUM di-claim user ini (terbaru dulu)
+    selected_cookie = base_query.filter(
+        CookieResult.id.notin_(claimed_ids_sq)
+    ).order_by(CookieResult.checked_at.desc()).first()
+
+    # Jika semua sudah di-claim → ambil dari awal lagi (recycle)
+    if not selected_cookie and total_available > 0:
+        selected_cookie = base_query.order_by(CookieResult.checked_at.desc()).first()
+        unclaimed_count = total_available
+
     plan_meta_selected = PLAN_META.get(
         selected_cookie.plan_key if selected_cookie else plan_filter,
         {'label': plan_filter or 'Unknown', 'icon': '📦', 'color': '#607D8B', 'desc': ''}
@@ -321,6 +246,7 @@ def country_view(country_code):
                            flag=flag,
                            cookie=selected_cookie,
                            total_available=total_available,
+                           unclaimed_count=unclaimed_count,
                            plan_filter=plan_filter,
                            plan_meta=PLAN_META,
                            plan_meta_selected=plan_meta_selected,
@@ -331,27 +257,88 @@ def country_view(country_code):
 @login_required
 @user_approved_required
 def api_country_data(country_code):
+    """
+    API generate token/cookie untuk user.
+    - Selalu kembalikan cookie yang BELUM pernah di-claim user ini.
+    - Catat claim agar generate berikutnya dapat cookie berbeda.
+    - Jika semua sudah di-claim, hapus history claim user ini dan mulai ulang (recycle).
+    """
     service = request.args.get('service', 'netflix')
     plan_filter = request.args.get('plan', '')
-    
-    query = CookieResult.query.filter(CookieResult.service_type == service)
+
+    # Build base query
+    base_query = CookieResult.query.filter(CookieResult.service_type == service)
     if country_code.strip().upper() == 'UNKNOWN':
-        query = query.filter(CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx']))
+        base_query = base_query.filter(
+            CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx'])
+        )
     else:
-        query = query.filter(CookieResult.country == country_code.strip())
-        
+        base_query = base_query.filter(CookieResult.country == country_code.strip())
+
     if plan_filter:
-        query = query.filter(CookieResult.plan_key == plan_filter)
-        
-    cookie = query.order_by(CookieResult.checked_at.desc()).first()
+        base_query = base_query.filter(CookieResult.plan_key == plan_filter)
+
+    total = base_query.count()
+    if total == 0:
+        return jsonify({'error': 'Tidak ada cookies tersedia untuk pilihan ini.'}), 404
+
+    # Ambil ID cookie yang sudah pernah di-claim user ini (untuk service ini)
+    from sqlalchemy import select as sa_select
+    already_claimed_sq = sa_select(UserCookieClaim.cookie_id).where(
+        UserCookieClaim.user_id == current_user.id,
+        UserCookieClaim.service_type == service
+    ).scalar_subquery()
+
+    # Cari cookie yang belum di-claim (prioritas terbaru berdasarkan checked_at)
+    cookie = base_query.filter(
+        CookieResult.id.notin_(already_claimed_sq)
+    ).order_by(CookieResult.checked_at.desc()).first()
+
+    # Jika semua sudah pernah di-claim → reset history claim user ini, lalu ulang
     if not cookie:
-        return jsonify({'error': 'No cookies found'}), 404
-        
+        try:
+            UserCookieClaim.query.filter_by(
+                user_id=current_user.id,
+                service_type=service
+            ).delete()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        cookie = base_query.order_by(CookieResult.checked_at.desc()).first()
+
+    if not cookie:
+        return jsonify({'error': 'Tidak ada cookies tersedia.'}), 404
+
+    # Catat claim ini agar user tidak dapat cookie yang sama di generate berikutnya
+    try:
+        claim = UserCookieClaim(
+            user_id=current_user.id,
+            cookie_id=cookie.id,
+            service_type=service
+        )
+        db.session.add(claim)
+        db.session.commit()
+    except Exception:
+        # Unique constraint error berarti sudah pernah claim, abaikan
+        db.session.rollback()
+
     return jsonify({
         'id': cookie.id,
         'plan_key': cookie.plan_key,
-        'checked_at': cookie.checked_at,
-        'cookie_text': cookie.cookie_text
+        'plan_name': cookie.plan_name,
+        'checked_at': str(cookie.checked_at),
+        'cookie_text': cookie.cookie_text,
+        'email': cookie.email,
+        'account_name': cookie.account_name,
+        'quality': cookie.quality,
+        'max_streams': cookie.max_streams,
+        'plan_price': cookie.plan_price,
+        'next_billing': cookie.next_billing,
+        'payment_method': cookie.payment_method,
+        'member_since': cookie.member_since,
+        'extra_members': cookie.extra_members,
+        'profiles': cookie.profiles,
+        'country': cookie.country,
     })
 
 
@@ -364,7 +351,8 @@ def cookie_detail(cookie_id):
     flag = get_flag(cookie.country)
     country_name = get_country_name(cookie.country)
     plan_meta = PLAN_META.get(cookie.plan_key, {'label': cookie.plan_name, 'icon': '📦', 'color': '#607D8B'})
-    return render_template('user/cookie_detail.html', cookie=cookie, flag=flag, plan_meta=plan_meta, country_name=country_name)
+    return render_template('user/cookie_detail.html', cookie=cookie, flag=flag,
+                           plan_meta=plan_meta, country_name=country_name)
 
 
 @user_bp.route('/get-token/<int:cookie_id>', methods=['POST'])
