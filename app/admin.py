@@ -232,16 +232,17 @@ def _run_check_background(flask_app, my_job_id, service_type, file_contents, pro
             db.session.rollback()
             print(f"[DB ERROR] Commit gagal: {e}\n{traceback.format_exc()}")
 
-        progress_queue.put(json.dumps({
-            'done': results['total'],
-            'total': results['total'],
-            'success': results['success'],
-            'failed': results['failed'],
-            'error': results['error'],
-            'saved': saved,
-            'current': 'DONE',
-            'status': 'done',
-        }))
+        if current_job_id == my_job_id and not is_cancelled():
+            progress_queue.put(json.dumps({
+                'done': results['total'],
+                'total': results['total'],
+                'success': results['success'],
+                'failed': results['failed'],
+                'error': results['error'],
+                'saved': saved,
+                'current': 'DONE',
+                'status': 'done',
+            }))
 
 def _run_recheck_background(flask_app, my_job_id):
     with flask_app.app_context():
@@ -336,16 +337,17 @@ def _run_recheck_background(flask_app, my_job_id):
         for t in thread_list: t.start()
         for t in thread_list: t.join()
         
-        progress_queue.put(json.dumps({
-            'done': results['total'],
-            'total': results['total'],
-            'success': results['success'],
-            'failed': results['failed'],
-            'error': results['error'],
-            'saved': results['success'],
-            'current': 'DONE',
-            'status': 'done',
-        }))
+        if current_job_id == my_job_id and not is_cancelled():
+            progress_queue.put(json.dumps({
+                'done': results['total'],
+                'total': results['total'],
+                'success': results['success'],
+                'failed': results['failed'],
+                'error': results['error'],
+                'saved': results['success'],
+                'current': 'DONE',
+                'status': 'done',
+            }))
 
 
 # ─── ROUTES ──────────────────────────────────────────────────────────────────

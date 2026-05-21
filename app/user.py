@@ -281,42 +281,78 @@ def plan_view(plan_key):
 @login_required
 @user_approved_required
 def country_view(country_code):
-    """Lihat semua cookies dari suatu negara."""
+    """Langsung pilih akun terbaik dari negara & generate token/cookie."""
     service = request.args.get('service', 'netflix')
-    page = request.args.get('page', 1, type=int)
     plan_filter = request.args.get('plan', '')
 
     country_code_normalized = country_code.strip()
     if country_code_normalized.upper() == 'UNKNOWN':
-        query = CookieResult.query.filter(CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx']), CookieResult.service_type == service)
+        query = CookieResult.query.filter(
+            CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx']),
+            CookieResult.service_type == service
+        )
     else:
-        query = CookieResult.query.filter(CookieResult.country == country_code_normalized, CookieResult.service_type == service)
+        query = CookieResult.query.filter(
+            CookieResult.country == country_code_normalized,
+            CookieResult.service_type == service
+        )
 
     if plan_filter:
         query = query.filter(CookieResult.plan_key == plan_filter)
 
-    pagination = query.order_by(CookieResult.checked_at.desc()).paginate(page=page, per_page=12)
+    # Otomatis pilih akun terbaik (checked paling baru)
+    selected_cookie = query.order_by(CookieResult.checked_at.desc()).first()
 
-    if country_code.strip().upper() == 'UNKNOWN':
-        plans_in_country = db.session.query(
-            CookieResult.plan_key, CookieResult.plan_name
-        ).filter(CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx']), CookieResult.service_type == service).distinct().all()
-    else:
-        plans_in_country = db.session.query(
-            CookieResult.plan_key, CookieResult.plan_name
-        ).filter(CookieResult.country == country_code, CookieResult.service_type == service).distinct().all()
+    # Hitung total untuk info
+    total_available = query.count()
+
+    # Plan info untuk display
+    plan_meta_selected = PLAN_META.get(
+        selected_cookie.plan_key if selected_cookie else plan_filter,
+        {'label': plan_filter or 'Unknown', 'icon': '📦', 'color': '#607D8B', 'desc': ''}
+    )
 
     flag = get_flag(country_code)
     country_name = get_country_name(country_code)
+
     return render_template('user/country.html',
                            country_code=country_code.upper(),
                            country_name=country_name,
                            flag=flag,
-                           pagination=pagination,
-                           plans_in_country=plans_in_country,
+                           cookie=selected_cookie,
+                           total_available=total_available,
                            plan_filter=plan_filter,
                            plan_meta=PLAN_META,
+                           plan_meta_selected=plan_meta_selected,
                            current_service=service)
+
+
+@user_bp.route('/api/country/<country_code>')
+@login_required
+@user_approved_required
+def api_country_data(country_code):
+    service = request.args.get('service', 'netflix')
+    plan_filter = request.args.get('plan', '')
+    
+    query = CookieResult.query.filter(CookieResult.service_type == service)
+    if country_code.strip().upper() == 'UNKNOWN':
+        query = query.filter(CookieResult.country.in_(['Unknown', 'UNKNOWN', 'unknown', 'XX', 'xx']))
+    else:
+        query = query.filter(CookieResult.country == country_code.strip())
+        
+    if plan_filter:
+        query = query.filter(CookieResult.plan_key == plan_filter)
+        
+    cookie = query.order_by(CookieResult.checked_at.desc()).first()
+    if not cookie:
+        return jsonify({'error': 'No cookies found'}), 404
+        
+    return jsonify({
+        'id': cookie.id,
+        'plan_key': cookie.plan_key,
+        'checked_at': cookie.checked_at,
+        'cookie_text': cookie.cookie_text
+    })
 
 
 @user_bp.route('/cookie/<int:cookie_id>')

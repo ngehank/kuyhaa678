@@ -11,14 +11,14 @@
     <span id="progressText" style="font-size:15px;font-weight:600;">Starting...</span>
     <span id="progressPct" style="font-size:20px;font-weight:800;color:var(--red);">0%</span>
   </div>
-  <div class="progress-bar-wrap" style="height:12px;">
-    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  <div class="progress-wrap" style="height:10px;">
+    <div class="progress-bar" id="progressBar" style="width:0%;background:linear-gradient(90deg,var(--red),#ff6b6b);"></div>
   </div>
   <div class="flex flex-wrap" style="gap:16px;margin-top:16px;font-size:13px;align-items:center;">
     <span>✅ Success: <strong id="cntSuccess" style="color:var(--success);">0</strong></span>
     <span>❌ Failed: <strong id="cntFailed" style="color:var(--red);">0</strong></span>
     <span>⚠️ Error: <strong id="cntError" style="color:var(--warning);">0</strong></span>
-    <span>📊 Total: <strong id="cntTotal" style="color:var(--cyan);">{{ total }}</strong></span>
+    <span>📊 Total: <strong id="cntTotal" style="color:#60a5fa;">{{ total }}</strong></span>
     <button onclick="stopChecking()" id="btnStop" class="btn btn-sm" style="margin-left:auto; background:var(--red); color:white; font-size:12px; border:none; border-radius:4px; cursor:pointer;">🛑 Stop</button>
   </div>
 </div>
@@ -66,7 +66,7 @@ evtSource.onmessage = function(e) {
   if (d.current && d.current !== 'DONE') {
     const cls = d.status === 'success' || d.status === 'free' ? 'ok' : d.status === 'failed' ? 'fail' : 'err';
     const icon = d.status === 'success' ? '✅' : d.status === 'free' ? '🆓' : d.status === 'failed' ? '❌' : '⚠️';
-    log.innerHTML += `<div class="checking-item ${cls}">${icon} ${d.current} <span style="color:var(--muted);margin-left:auto;">${d.status}</span></div>`;
+    log.innerHTML += `<div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;gap:8px;">${icon} <span style="color:var(--text);">${d.current}</span><span style="color:var(--text-muted);margin-left:auto;">${d.status}</span></div>`;
     log.scrollTop = log.scrollHeight;
   }
 
@@ -89,7 +89,7 @@ function stopChecking() {
   if (confirm("Are you sure you want to stop the checking process?")) {
     document.getElementById('btnStop').textContent = "Stopping...";
     document.getElementById('btnStop').disabled = true;
-    fetch("{{ url_for('admin.cancel_check') }}", { method: 'POST' })
+    fetch("{{ url_for('admin.api_cancel') }}", { method: 'POST' })
       .then(res => res.json())
       .then(data => {
         txt.textContent = 'Stopped by user';

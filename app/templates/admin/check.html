@@ -41,7 +41,7 @@
               <div class="upload-icon">🗜️</div>
               <p><strong>Click to select</strong> a ZIP file</p>
               <p style="font-size:12px;margin-top:6px;color:var(--text-muted);">Zip all your .txt/.json cookie files into 1 ZIP file</p>
-              <div id="zipName" style="margin-top:12px;font-size:14px;color:var(--cyan);font-weight:700;"></div>
+              <div id="zipName" style="margin-top:12px;font-size:14px;color:var(--red);font-weight:700;"></div>
             </div>
             <input type="file" id="zipInput" name="zip_file" accept=".zip" style="display:none"
                    onchange="document.getElementById('zipName').textContent = this.files[0]?.name || ''">
@@ -125,10 +125,10 @@
     <div style="font-size:14px;line-height:1.8;color:var(--text-muted);">
 
       <p><strong style="color:#fff;">🔥 For 1000+ Files (Recommended):</strong></p>
-      <div style="background:rgba(6, 182, 212, 0.05);border:1px solid rgba(6, 182, 212, 0.2);border-radius:var(--radius-sm);padding:16px;margin:12px 0 20px;">
-        <p style="color:var(--cyan);font-weight:700;margin-bottom:8px;">Folder Path Method (Fastest)</p>
+      <div style="background:var(--red-dim);border:1px solid rgba(229,9,20,0.2);border-radius:var(--radius-sm);padding:16px;margin:12px 0 20px;">
+        <p style="color:var(--red);font-weight:700;margin-bottom:8px;">Folder Path Method (Fastest)</p>
         <ol style="padding-left:20px;line-height:2;">
-          <li>Put all cookies in a folder, e.g. <code style="color:var(--gold);background:rgba(245, 158, 11, 0.1);padding:2px 6px;border-radius:4px;">D:\cookies</code></li>
+          <li>Put all cookies in a folder, e.g. <code style="color:#f59e0b;background:rgba(245, 158, 11, 0.1);padding:2px 6px;border-radius:4px;">D:\cookies</code></li>
           <li>Click the <strong style="color:#fff;">📂 Folder Path</strong> tab</li>
           <li>Type the folder path</li>
           <li>Click Start Checking</li>
@@ -174,7 +174,7 @@ function updateFileList(input) {
   const list = document.getElementById('fileList');
   if (!input.files.length) { list.innerHTML=''; return; }
   const n = input.files.length;
-  list.innerHTML = `<div style="color:var(--cyan);font-weight:700;font-size:14px;margin-bottom:8px;">✅ ${n} files selected</div>` +
+  list.innerHTML = `<div style="color:var(--red);font-weight:700;font-size:14px;margin-bottom:8px;">✅ ${n} files selected</div>` +
     Array.from(input.files).slice(0,4).map(f =>
       `<div style="font-size:12px;color:var(--text-muted);margin-bottom:2px;">• ${f.name}</div>`
     ).join('') +

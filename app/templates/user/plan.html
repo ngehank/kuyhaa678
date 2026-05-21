@@ -1,31 +1,52 @@
 {% extends "base.html" %}
 {% block title %}{{ plan_meta.label }} — NF Manager{% endblock %}
 {% block content %}
+
+{% set show_flag = current_service in ['netflix', 'primevideo'] %}
+
 <div class="page-header">
-  <div class="flex-between">
-    <div>
-      <h2 class="page-title">{{ plan_meta.icon }} {{ plan_meta.label }} Accounts</h2>
-      <p class="page-subtitle">{{ plan_meta.desc }} — Select a country to view available accounts</p>
-    </div>
-    <a href="{{ url_for('user.dashboard', service=current_service) }}" class="btn btn-secondary btn-sm">← Back</a>
+  <div>
+    <h1 class="page-title">{{ plan_meta.icon }} {{ plan_meta.label }}</h1>
+    <p class="page-subtitle">
+      {{ plan_meta.desc }}
+      &mdash;
+      {% if show_flag %}Pilih negara untuk generate token{% else %}Pilih region untuk akses{% endif %}
+    </p>
   </div>
+  <a href="{{ url_for('user.dashboard', service=current_service) }}" class="btn btn-secondary btn-sm">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back
+  </a>
 </div>
 
 {% if countries %}
+<div class="section-label">
+  {% if show_flag %}Negara Tersedia{% else %}Region Tersedia{% endif %}
+</div>
 <div class="grid-auto">
   {% for c in countries %}
-  <a href="{{ url_for('user.country_view', country_code=c.code, plan=plan_key, service=current_service) }}" class="country-card">
-    <div class="flag">{{ c.flag }}</div>
-    <div class="code" style="font-size:13px;font-weight:700;">{{ c.name }}</div>
-    <div class="count" style="font-size:11px;color:var(--muted);">{{ c.count }} accounts</div>
+  <a href="{{ url_for('user.country_view', country_code=c.code, plan=plan_key, service=current_service) }}"
+     class="country-card">
+    {% if show_flag %}
+      <div class="flag">{{ c.flag }}</div>
+      <div class="code">{{ c.name }}</div>
+    {% else %}
+      <div style="font-size:26px;margin-bottom:8px;opacity:0.55;">🌐</div>
+      <div class="code">{{ c.name }}</div>
+    {% endif %}
+    <div class="count">{{ c.count }} akun</div>
   </a>
   {% endfor %}
 </div>
+
 {% else %}
-<div class="card" style="text-align:center;padding:60px;">
-  <div style="font-size:48px;">📭</div>
-  <p style="color:var(--muted);margin-top:12px;">No accounts available for this plan.</p>
-  <a href="{{ url_for('user.dashboard', service=current_service) }}" class="btn btn-primary mt-2">← Back</a>
+<div class="card" style="text-align:center;padding:70px 20px;">
+  <div style="font-size:52px;margin-bottom:16px;">📭</div>
+  <p style="color:var(--text-muted);font-size:15px;margin-bottom:16px;">
+    Tidak ada akun tersedia untuk plan ini.
+  </p>
+  <a href="{{ url_for('user.dashboard', service=current_service) }}" class="btn btn-primary">← Kembali</a>
 </div>
 {% endif %}
+
 {% endblock %}

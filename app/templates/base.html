@@ -3,179 +3,149 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Netflix Cookie Manager{% endblock %}</title>
+<title>{% block title %}NF Manager — Free Premium Accounts{% endblock %}</title>
+<meta name="description" content="Access free streaming accounts instantly. Netflix, Prime Video, Spotify and more.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
+<!-- Background layers (GClix style) -->
+<div class="bg-grid"></div>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
 <!-- FREE PALESTINE BANNER -->
-<div id="palestine-banner" style="
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 9999;
-  background: linear-gradient(90deg, #000 25%, #009736 25%, #009736 50%, #fff 50%, #fff 75%, #ce1126 75%);
-  padding: 0;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-  cursor: pointer;
-  overflow: hidden;
-">
-  <!-- Animated shimmer -->
-  <div style="
-    position:absolute;top:0;left:-100%;width:60%;height:100%;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
-    animation: shimmer-pal 3s infinite;
-  "></div>
-
-  <span style="
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: #fff;
-    text-shadow: 0 0 12px rgba(0,0,0,0.8), 1px 1px 0 #000;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: relative;
-  ">
-    <span style="font-size:18px;animation:pulse-pal 1.5s infinite;">🇵🇸</span>
+<div id="palestine-banner">
+  <div class="pal-shimmer"></div>
+  <span>
+    <span style="font-size:16px;animation:pulse-pal 1.5s infinite;">🇵🇸</span>
     &nbsp;Free Palestine&nbsp;
-    <span style="font-size:18px;animation:pulse-pal 1.5s infinite 0.75s;">🇵🇸</span>
+    <span style="font-size:16px;animation:pulse-pal 1.5s infinite 0.75s;">🇵🇸</span>
   </span>
-
-
 </div>
 
-<style>
-@keyframes shimmer-pal {
-  0%   { left: -100%; }
-  100% { left: 200%; }
-}
-@keyframes pulse-pal {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.25); }
-}
-/* Push layout down to avoid banner overlap */
-.layout.has-banner { margin-top: 36px; }
-.mobile-header.has-banner { top: 36px; }
-.sidebar.has-banner { top: 36px; height: calc(100vh - 36px); }
-.sidebar-overlay.has-banner { top: 36px; height: calc(100vh - 36px); }
-</style>
-<div class="layout has-banner">
-  <!-- MOBILE OVERLAY -->
-  <div id="sidebar-overlay" class="sidebar-overlay has-banner"></div>
+<!-- NAV -->
+<nav class="nav" id="mainNav">
+  <div class="nav-inner">
+    <!-- Logo -->
+    <a href="{{ url_for('user.dashboard') if current_user.is_authenticated else url_for('auth.login') }}" class="nav-logo">
+      <div class="nav-logo-icon">N</div>
+      <span>NF Manager</span>
+    </a>
 
-  <!-- MOBILE HEADER -->
-  <div class="mobile-header has-banner">
-    <div class="mobile-logo">🎬 NF Manager</div>
-    <button id="mobile-menu-btn" class="mobile-menu-btn">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-    </button>
-  </div>
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar has-banner">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <span>🎬</span> <span class="logo-text">NF Manager</span>
-      </div>
-      <div class="sidebar-subtitle">Cookie Dashboard</div>
-    </div>
-    
-    <div class="sidebar-scroll">
-
-    {% if current_user.is_authenticated %}
-    {% if current_user.is_admin %}
-    <div class="nav-section">
-      <div class="nav-label">Admin</div>
-      <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
-        <span class="icon">📊</span> Dashboard
-      </a>
-      <a href="{{ url_for('admin.check') }}" class="nav-link {% if request.endpoint in ['admin.check','admin.checking'] %}active{% endif %}">
-        <span class="icon">🔍</span> Check Cookies
-      </a>
-      <a href="{{ url_for('admin.results') }}" class="nav-link {% if request.endpoint == 'admin.results' %}active{% endif %}">
-        <span class="icon">🗄️</span> Database
-      </a>
-      <a href="{{ url_for('admin.users') }}" class="nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}">
-        <span class="icon">👥</span> Manage Users
-      </a>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-label">User View</div>
-      <a href="{{ url_for('user.dashboard') }}" class="nav-link">
-        <span class="icon">🏠</span> User Dashboard
-      </a>
-    </div>
-    {% else %}
-    <div class="nav-section">
-      <div class="nav-label">Services</div>
-      <a href="{{ url_for('user.dashboard', service='netflix') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service', 'netflix') == 'netflix' %}active{% endif %}">
-        <span class="icon">🔴</span> Netflix
-      </a>
-      <a href="{{ url_for('user.dashboard', service='primevideo') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'primevideo' %}active{% endif %}">
-        <span class="icon">🔵</span> Prime Video
-      </a>
-      <a href="{{ url_for('user.dashboard', service='spotify') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'spotify' %}active{% endif %}">
-        <span class="icon">🟢</span> Spotify
-      </a>
-      <a href="{{ url_for('user.dashboard', service='udemy') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'udemy' %}active{% endif %}">
-        <span class="icon">🎓</span> Udemy
-      </a>
-      <a href="{{ url_for('user.dashboard', service='crunchyroll') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'crunchyroll' %}active{% endif %}">
-        <span class="icon">🟠</span> Crunchyroll
-      </a>
-      <a href="{{ url_for('user.dashboard', service='claude') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'claude' %}active{% endif %}">
-        <span class="icon">🎨</span> Claude
-      </a>
-      <a href="{{ url_for('user.dashboard', service='gog') }}" class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service') == 'gog' %}active{% endif %}">
-        <span class="icon">⚙️</span> GOG.com
-      </a>
-    </div>
-    {% endif %}
-    {% endif %}
-
-    </div>
-
-    <div class="sidebar-footer">
+    <!-- Center links (desktop) -->
+    <div class="nav-links">
       {% if current_user.is_authenticated %}
-      <div class="user-profile">
-        <div class="avatar">{{ current_user.username[0]|upper }}</div>
-        <div class="user-info">
-          <span class="user-name">{{ current_user.username }}</span>
-          <span class="user-role">
-            {% if current_user.is_admin %}
-            <span class="badge badge-admin">Admin</span>
-            {% else %}
-            <span class="badge badge-user">User</span>
-            {% endif %}
-          </span>
-        </div>
-      </div>
-      <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary" style="width:100%;justify-content:center;">
-        <span class="icon">🚪</span> <span>Logout</span>
-      </a>
+        {% if current_user.is_admin %}
+          <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+          </a>
+          <a href="{{ url_for('admin.check') }}" class="nav-link {% if request.endpoint in ['admin.check','admin.checking'] %}active{% endif %}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Check Cookies
+          </a>
+          <a href="{{ url_for('admin.results') }}" class="nav-link {% if request.endpoint == 'admin.results' %}active{% endif %}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            Database
+          </a>
+          <a href="{{ url_for('admin.users') }}" class="nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Users
+          </a>
+          <a href="{{ url_for('user.dashboard') }}" class="nav-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            User View
+          </a>
+        {% else %}
+          {% set svc_list = [
+            ('netflix',     '🔴', 'Netflix',     '#e50914'),
+            ('primevideo',  '🔵', 'Prime Video',  '#00a8e1'),
+            ('spotify',     '🟢', 'Spotify',      '#1db954'),
+            ('udemy',       '🎓', 'Udemy',        '#a435f0'),
+            ('crunchyroll', '🟠', 'Crunchyroll',  '#f47521'),
+            ('claude',      '🎨', 'Claude',       '#d97757'),
+            ('gog',         '⚙️', 'GOG.com',      '#c0369c')
+          ] %}
+          {% for s_key, s_emoji, s_label, s_color in svc_list %}
+          <a href="{{ url_for('user.dashboard', service=s_key) }}"
+             class="nav-link {% if request.endpoint == 'user.dashboard' and request.args.get('service', 'netflix') == s_key %}active{% endif %}">
+            <span class="svc-dot" style="background:{{ s_color }};"></span>
+            {{ s_label }}
+          </a>
+          {% endfor %}
+        {% endif %}
       {% endif %}
     </div>
-  </aside>
 
-  <!-- MAIN -->
-  <main class="main-content animate-in">
+    <!-- Right actions -->
+    <div class="nav-actions">
+      {% if current_user.is_authenticated %}
+      <div class="nav-user">
+        <div class="nav-avatar">{{ current_user.username[0]|upper }}</div>
+        <span class="nav-username">{{ current_user.username }}</span>
+        {% if current_user.is_admin %}
+        <span class="badge badge-admin" style="margin-left:2px;">Admin</span>
+        {% endif %}
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </a>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Login</a>
+      <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Register</a>
+      {% endif %}
+
+      <!-- Mobile hamburger -->
+      <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile drawer -->
+<div class="mobile-drawer" id="mobileDrawer">
+  {% if current_user.is_authenticated %}
+    {% if current_user.is_admin %}
+      <a href="{{ url_for('admin.dashboard') }}" class="nav-link">📊 Dashboard</a>
+      <a href="{{ url_for('admin.check') }}" class="nav-link">🔍 Check Cookies</a>
+      <a href="{{ url_for('admin.results') }}" class="nav-link">🗄️ Database</a>
+      <a href="{{ url_for('admin.users') }}" class="nav-link">👥 Users</a>
+      <a href="{{ url_for('user.dashboard') }}" class="nav-link">🏠 User View</a>
+    {% else %}
+      <a href="{{ url_for('user.dashboard', service='netflix') }}" class="nav-link">🔴 Netflix</a>
+      <a href="{{ url_for('user.dashboard', service='primevideo') }}" class="nav-link">🔵 Prime Video</a>
+      <a href="{{ url_for('user.dashboard', service='spotify') }}" class="nav-link">🟢 Spotify</a>
+      <a href="{{ url_for('user.dashboard', service='udemy') }}" class="nav-link">🎓 Udemy</a>
+      <a href="{{ url_for('user.dashboard', service='crunchyroll') }}" class="nav-link">🟠 Crunchyroll</a>
+      <a href="{{ url_for('user.dashboard', service='claude') }}" class="nav-link">🎨 Claude</a>
+      <a href="{{ url_for('user.dashboard', service='gog') }}" class="nav-link">⚙️ GOG.com</a>
+    {% endif %}
+    <div style="height:1px;background:rgba(255,255,255,0.08);margin:8px 0;"></div>
+    <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color:#f87171;">🚪 Logout</a>
+  {% else %}
+    <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
+    <a href="{{ url_for('auth.register') }}" class="nav-link">Register</a>
+  {% endif %}
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="page-wrap">
+  <div class="container animate-in">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in messages %}
-    <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    <div class="alert alert-{{ cat }}" style="margin-bottom:20px;">{{ msg }}</div>
     {% endfor %}
     {% endwith %}
     {% block content %}{% endblock %}
-  </main>
+  </div>
 </div>
+
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>

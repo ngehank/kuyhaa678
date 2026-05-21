@@ -1,71 +1,484 @@
 {% extends "base.html" %}
-{% block title %}{{ flag }} {{ country_code }} — NF Manager{% endblock %}
+{% block title %}
+  {% if current_service == 'netflix' %}Generate Token{% else %}Get Cookies{% endif %}
+  — {{ flag }} {{ country_name }} — NF Manager
+{% endblock %}
+
 {% block content %}
+{# ── Layanan berbasis negara: Netflix, Prime Video ── #}
+{% set show_flag = current_service in ['netflix', 'primevideo'] %}
+{# ── Layanan tanpa konteks negara: Spotify, Udemy, Crunchyroll, Claude, GOG ── #}
+
+{# ── Header ── #}
 <div class="page-header">
-  <div class="flex-between">
-    <div>
-      <h2 class="page-title">{{ flag }} {{ country_name }}</h2>
-      <p class="page-subtitle">{{ pagination.total }} accounts available &mdash; {{ current_service|upper }}</p>
+  <div>
+    <div class="flex gap-2 mb-2" style="align-items:center;flex-wrap:wrap;">
+      <div class="badge badge-live">Live</div>
+      {% if plan_meta_selected.label %}
+      <span class="badge" style="background:{{ plan_meta_selected.color }}22;color:{{ plan_meta_selected.color }};border-color:{{ plan_meta_selected.color }}44;">
+        {{ plan_meta_selected.icon }} {{ plan_meta_selected.label }}
+      </span>
+      {% endif %}
     </div>
-    <a href="{{ url_for('user.dashboard', service=current_service) }}" class="btn btn-secondary btn-sm">← Back</a>
+
+    <h1 class="page-title">
+      {% if show_flag %}
+        <span style="font-size:1em;margin-right:8px;">{{ flag }}</span>
+      {% endif %}
+      {{ country_name }}
+    </h1>
+
+    <p class="page-subtitle">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.6"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      {% if current_service == 'netflix' %}Generate NFToken{% else %}Get Raw Cookies{% endif %}
+      &mdash;
+      <strong style="color:var(--red);">{{ total_available }}</strong> akun tersedia
+      <span style="text-transform:uppercase;font-weight:700;color:var(--text-muted);font-size:11px;">· {{ current_service }}</span>
+    </p>
   </div>
-</div>
 
-<!-- PLAN FILTER -->
-{% if plans_in_country|length > 1 %}
-<div class="flex gap-2 mb-4" style="flex-wrap:wrap;">
-  <a href="{{ url_for('user.country_view', country_code=country_code, service=current_service) }}" class="btn btn-sm {% if not plan_filter %}btn-primary{% else %}btn-secondary{% endif %}">All Plans</a>
-  {% for p in plans_in_country %}
-  <a href="{{ url_for('user.country_view', country_code=country_code, plan=p.plan_key, service=current_service) }}"
-     class="btn btn-sm {% if plan_filter==p.plan_key %}btn-primary{% else %}btn-secondary{% endif %}">
-    {{ plan_meta.get(p.plan_key, {}).get('icon','📦') }} {{ p.plan_name or p.plan_key }}
+  <a href="javascript:history.back()" class="btn btn-secondary btn-sm">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back
   </a>
-  {% endfor %}
 </div>
-{% endif %}
 
-<!-- COOKIE LIST -->
-{% set badge_cls = {'premium':'badge-premium','standard':'badge-standard','standard_with_ads':'badge-standard','basic':'badge-basic','mobile':'badge-mobile','free':'badge-free'} %}
-<div class="grid-3">
-  {% for c in pagination.items %}
-  <a href="{{ url_for('user.cookie_detail', cookie_id=c.id) }}" class="plan-card" style="text-decoration:none;align-items:flex-start;text-align:left;padding:24px;">
-    <div class="flex-between mb-3" style="width:100%;">
-      <span class="badge {{ badge_cls.get(c.plan_key,'') }}">{{ c.plan_name or c.plan_key }}</span>
-      <span style="font-size:12px;color:var(--text-muted);font-weight:600;">{{ c.quality or '—' }}</span>
+{% if not cookie %}
+{# ── Tidak ada akun ── #}
+<div class="card" style="text-align:center;padding:60px 20px;">
+  <div style="font-size:52px;margin-bottom:16px;">📭</div>
+  <p style="color:var(--text-muted);font-size:15px;margin-bottom:4px;">Tidak ada akun tersedia untuk filter ini.</p>
+  <p style="color:var(--text-dim);font-size:13px;margin-bottom:20px;">Coba pilih plan atau negara yang lain.</p>
+  <a href="{{ url_for('user.dashboard', service=current_service) }}" class="btn btn-primary">← Kembali ke Dashboard</a>
+</div>
+
+{% else %}
+{# ── Ada akun — tampilkan countdown + generate ── #}
+
+{# ── Layout: kiri = generate, kanan = info (terkunci) ── #}
+<div class="gen-layout">
+
+  {# ══ KOLOM KIRI: Generate / Countdown ══ #}
+  <div>
+
+    {# ── Kartu utama generate ── #}
+    <div class="card gen-card">
+
+      {# ── STEP 1: Tombol awal ── #}
+      <div id="stepInit">
+        <div style="text-align:center;padding:24px 16px 8px;">
+          <div style="font-size:52px;margin-bottom:12px;">
+            {% if current_service == 'netflix' %}🔑{% else %}🍪{% endif %}
+          </div>
+          <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;">
+            {% if current_service == 'netflix' %}Generate NFToken{% else %}Ambil Raw Cookies{% endif %}
+          </h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;line-height:1.6;">
+            {% if current_service == 'netflix' %}
+              Token login satu klik untuk Netflix. Token berlaku 10 menit dan tidak disimpan.
+            {% else %}
+              Raw cookies untuk login via Cookie-Editor atau Console Script.
+            {% endif %}
+          </p>
+          <button class="btn btn-primary btn-full btn-lg" id="btnStartGen" onclick="startGeneration()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            {% if current_service == 'netflix' %}Generate Token Sekarang{% else %}Tampilkan Cookies{% endif %}
+          </button>
+        </div>
+      </div>
+
+      {# ── STEP 2: Countdown ── #}
+      <div id="stepCountdown" style="display:none;text-align:center;padding:20px 16px;">
+        <div style="font-size:44px;margin-bottom:10px;" id="cdIcon">
+          {% if current_service == 'netflix' %}🔐{% else %}🍪{% endif %}
+        </div>
+        <p style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;" id="cdTitle">
+          {% if current_service == 'netflix' %}Generating Secure Token...{% else %}Fetching Secure Cookies...{% endif %}
+        </p>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:18px;" id="cdSubtitle">
+          {% if current_service == 'netflix' %}Authenticating with Netflix servers{% else %}Retrieving session data{% endif %}
+        </p>
+        <div class="progress-wrap" style="margin-bottom:16px;">
+          <div id="cdBar" class="progress-bar" style="width:0%;background:linear-gradient(90deg,var(--red),#ff6b6b);transition:none;"></div>
+        </div>
+        <p style="font-size:42px;font-weight:900;color:var(--red);letter-spacing:-2px;line-height:1;" id="cdNumber">15</p>
+        <p style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-top:4px;">detik tersisa</p>
+      </div>
+
+      {# ── STEP 3: Hasil (Netflix = token, lainnya = cookies) ── #}
+      <div id="stepResult" style="display:none;padding:8px 0;">
+
+        {% if current_service == 'netflix' %}
+        {# ── Hasil: NFToken ── #}
+        <div id="tokenOk" style="display:none;">
+          <div style="text-align:center;padding:12px 0 20px;">
+            <div style="font-size:36px;margin-bottom:8px;">✅</div>
+            <p style="font-weight:800;font-size:16px;margin-bottom:4px;">Token Generated!</p>
+            <p style="font-size:12px;color:var(--text-muted);">
+              Berlaku hingga: <span id="tokenExpiry" style="color:var(--warning);font-weight:700;"></span>
+            </p>
+          </div>
+          <div class="token-box">
+            <a id="pcLink" href="#" target="_blank" rel="noopener" class="token-link">
+              <span class="t-icon">🖥️</span>
+              <div>
+                <div class="t-label">PC / Desktop Login</div>
+                <div class="t-url" id="pcUrl"></div>
+              </div>
+              <span style="margin-left:auto;color:var(--red);font-size:18px;">→</span>
+            </a>
+            <a id="mobileLink" href="#" target="_blank" rel="noopener" class="token-link">
+              <span class="t-icon">📱</span>
+              <div>
+                <div class="t-label">Mobile Login</div>
+                <div class="t-url" id="mobileUrl"></div>
+              </div>
+              <span style="margin-left:auto;color:var(--red);font-size:18px;">→</span>
+            </a>
+            <div class="flex gap-2 mt-3">
+              <button onclick="copyText(document.getElementById('pcUrl').textContent,'✅ PC URL disalin!')" class="copy-btn">📋 Copy PC</button>
+              <button onclick="copyText(document.getElementById('mobileUrl').textContent,'✅ Mobile URL disalin!')" class="copy-btn">📋 Copy Mobile</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="tokenErr" class="alert alert-danger" style="display:none;margin:0;"></div>
+
+        <button onclick="retryGen()" id="btnRetry" class="btn btn-secondary btn-full mt-3" style="display:none;">
+          🔄 Generate Ulang
+        </button>
+
+        {% else %}
+        {# ── Hasil: Raw Cookies (non-Netflix) ── #}
+        <div id="cookieOk">
+          <div style="text-align:center;padding:8px 0 16px;">
+            <div style="font-size:32px;margin-bottom:6px;">✅</div>
+            <p style="font-weight:800;font-size:15px;">Cookies Ready!</p>
+          </div>
+          <textarea class="form-control font-mono" rows="7" readonly id="rawCookieBox"
+                    style="font-size:11px;background:rgba(0,0,0,0.4);resize:none;">{{ cookie.cookie_text }}</textarea>
+          <div class="flex gap-2 mt-2">
+            <button onclick="copyRawCookies()" class="btn btn-primary" style="flex:1;">📋 Copy Cookies</button>
+            <button onclick="copyConsoleScript('{{ current_service }}')" class="btn btn-secondary" style="flex:1;">⚡ Copy Script</button>
+          </div>
+          {# Petunjuk console script #}
+          <div style="background:var(--red-dim);border-left:3px solid var(--red);padding:12px;border-radius:var(--radius-sm);margin-top:14px;font-size:12px;color:var(--text-muted);line-height:1.6;">
+            <strong style="color:var(--red);">⚡ Console Script:</strong>
+            Buka
+            <strong style="color:#fff;">
+              {% if current_service == 'spotify' %}open.spotify.com
+              {% elif current_service == 'udemy' %}udemy.com
+              {% elif current_service == 'crunchyroll' %}crunchyroll.com
+              {% elif current_service == 'claude' %}claude.ai
+              {% elif current_service == 'gog' %}gog.com
+              {% else %}primevideo.com{% endif %}
+            </strong>
+            → tekan <strong>F12</strong> → <strong>Console</strong> → paste → Enter
+          </div>
+        </div>
+        {% endif %}
+
+      </div>{# /stepResult #}
+
+    </div>{# /gen-card #}
+
+    {# ── Panduan login (non-Netflix) ── #}
+    {% if current_service != 'netflix' %}
+    <div class="card mt-3">
+      <div class="card-title" style="font-size:14px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Cara Login dengan Cookie-Editor
+      </div>
+      <ol style="padding-left:18px;font-size:13px;color:var(--text-muted);line-height:2.2;">
+        <li>Install ekstensi <strong style="color:var(--text);">Cookie-Editor</strong> di browser</li>
+        <li>Buka <strong style="color:#fff;">
+          {% if current_service == 'spotify' %}open.spotify.com
+          {% elif current_service == 'udemy' %}udemy.com
+          {% elif current_service == 'crunchyroll' %}crunchyroll.com
+          {% elif current_service == 'claude' %}claude.ai
+          {% elif current_service == 'gog' %}gog.com
+          {% else %}primevideo.com{% endif %}
+        </strong></li>
+        <li>Klik ekstensi → <strong>🗑️ Delete All</strong></li>
+        <li>Klik <strong>⬇️ Import</strong> → paste cookies → <strong>Import</strong></li>
+        <li>Refresh halaman 🎉</li>
+      </ol>
     </div>
-    <div style="font-size:14px;color:var(--text);margin-bottom:12px;font-weight:600;word-break:break-all;">📧 {{ c.email or 'Account' }}</div>
-    <div class="flex gap-2" style="font-size:13px;color:var(--text-muted);font-weight:500;">
-      <span>📺 {{ c.max_streams or '?' }} Screens</span>
-      <span style="color:var(--text-muted);opacity:0.5;">·</span>
-      <span>{{ c.quality or '—' }}</span>
-      <span style="color:var(--text-muted);opacity:0.5;">·</span>
-      <span>{{ c.plan_price or '—' }}</span>
-    </div>
-    {% if c.next_billing %}
-    <div style="font-size:12px;color:var(--text-muted);margin-top:12px;font-weight:500;">📅 Renews: {{ c.next_billing }}</div>
     {% endif %}
-    <div class="btn btn-cyan btn-sm mt-3" style="display:inline-flex;width:100%;">🔑 View Details</div>
-  </a>
-  {% else %}
-  <div class="card" style="grid-column:1/-1;text-align:center;padding:60px;">
-    <p style="color:var(--text-muted);">No accounts found for this filter.</p>
-  </div>
-  {% endfor %}
+
+  </div>{# /kolom kiri #}
+
+
+  {# ══ KOLOM KANAN: Info akun (tersembunyi sampai generate selesai) ══ #}
+  <div>
+    <div class="card info-locked-card" id="infoCard">
+      {# Overlay kunci (sebelum generate) #}
+      <div class="info-lock-overlay" id="infoLockOverlay">
+        <div style="text-align:center;">
+          <div style="font-size:36px;margin-bottom:10px;">🔒</div>
+          <p style="font-weight:700;font-size:14px;margin-bottom:6px;">Informasi Terkunci</p>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.6;">
+            Selesaikan generate untuk melihat detail akun
+          </p>
+        </div>
+      </div>
+
+      {# Konten info akun #}
+      <div class="card-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Detail Akun
+      </div>
+
+      {% macro inforow(key, val) %}
+      {% if val %}
+      <div class="info-row">
+        <span class="info-key">{{ key }}</span>
+        <span class="info-val">{{ val }}</span>
+      </div>
+      {% endif %}
+      {% endmacro %}
+
+      {{ inforow('Service', cookie.service_type|upper) }}
+      {{ inforow('Plan', plan_meta_selected.icon + ' ' + (cookie.plan_name or cookie.plan_key)) }}
+
+      {% if show_flag %}
+      <div class="info-row">
+        <span class="info-key">Country</span>
+        <span class="info-val">{{ flag }} {{ country_name }}</span>
+      </div>
+      {% else %}
+      {{ inforow('Region', country_name if country_name != 'Global / Unknown' else '—') }}
+      {% endif %}
+
+      {% if cookie.service_type == 'netflix' %}
+      {{ inforow('Quality', cookie.quality) }}
+      {{ inforow('Max Screens', cookie.max_screens|string ~ ' Screens' if cookie.max_screens else none) }}
+      {{ inforow('Price', cookie.plan_price) }}
+      {% endif %}
+      {{ inforow('Next Billing', cookie.next_billing) }}
+      {{ inforow('Member Since', cookie.member_since) }}
+      {{ inforow('Payment Method', cookie.payment_method) }}
+      {% if cookie.extra_members %}
+      {{ inforow('Extra Member', cookie.extra_members) }}
+      {% endif %}
+      {% if cookie.hold_status %}
+      {{ inforow('Hold Status', cookie.hold_status) }}
+      {% endif %}
+      {{ inforow('Membership', cookie.membership_status) }}
+      {% if cookie.profiles %}
+      {{ inforow('Profiles', cookie.profiles) }}
+      {% endif %}
+    </div>
+
+    {# ── Pool info ── #}
+    <div class="card mt-3" style="padding:16px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div>
+          <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;margin-bottom:4px;">Pool Akun</p>
+          <p style="font-size:22px;font-weight:900;color:var(--red);">{{ total_available }}</p>
+          <p style="font-size:11px;color:var(--text-muted);">akun tersedia</p>
+        </div>
+        <div style="font-size:36px;opacity:.15;">🗄️</div>
+      </div>
+    </div>
+
+  </div>{# /kolom kanan #}
+
+</div>{# /gen-layout #}
+
+{% endif %}{# /cookie ada #}
+
+{# ─── Hidden data untuk JS ─── #}
+<div id="jsData"
+     data-service="{{ current_service }}"
+     data-cookie-id="{{ cookie.id if cookie else '' }}"
+     style="display:none;">
 </div>
 
-<!-- PAGINATION -->
-{% if pagination.pages > 1 %}
-<div class="pagination mt-4">
-  {% if pagination.has_prev %}
-  <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.prev_num, plan=plan_filter, service=current_service) }}" class="page-btn">←</a>
-  {% endif %}
-  {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-    {% if p %}<a href="{{ url_for('user.country_view', country_code=country_code, page=p, plan=plan_filter, service=current_service) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
-    {% else %}<span class="page-btn" style="opacity:0.4;cursor:default;">…</span>{% endif %}
-  {% endfor %}
-  {% if pagination.has_next %}
-  <a href="{{ url_for('user.country_view', country_code=country_code, page=pagination.next_num, plan=plan_filter, service=current_service) }}" class="page-btn">→</a>
-  {% endif %}
-</div>
-{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const svc     = document.getElementById('jsData')?.dataset.service || 'netflix';
+const cookieId = document.getElementById('jsData')?.dataset.cookieId || '';
+const SECONDS = 15;
+let countdownActive = false;
+
+function getCsrf() {
+  const m = document.querySelector('meta[name="csrf-token"]');
+  return m ? m.content : '';
+}
+
+function startGeneration() {
+  if (countdownActive) return;
+  countdownActive = true;
+
+  document.getElementById('stepInit').style.display = 'none';
+  document.getElementById('stepCountdown').style.display = 'block';
+
+  // Animasi ikon countdown
+  const icon = document.getElementById('cdIcon');
+  icon.style.animation = 'spin-slow 2s linear infinite';
+  icon.style.display = 'inline-block';
+
+  let remaining = SECONDS;
+  const numEl = document.getElementById('cdNumber');
+  const bar   = document.getElementById('cdBar');
+
+  // Animasi progress bar
+  setTimeout(() => {
+    bar.style.transition = `width ${SECONDS}s linear`;
+    bar.style.width = '100%';
+  }, 50);
+
+  // Fetch langsung mulai di background (Netflix)
+  let fetchPromise = null;
+  if (svc === 'netflix' && cookieId) {
+    fetchPromise = fetch(`/user/get-token/${cookieId}`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrf(), 'Content-Type': 'application/json' }
+    }).then(r => r.json());
+  }
+
+  const timer = setInterval(() => {
+    remaining--;
+    numEl.textContent = remaining;
+
+    if (remaining <= 0) {
+      clearInterval(timer);
+      icon.style.animation = '';
+      document.getElementById('stepCountdown').style.display = 'none';
+      document.getElementById('stepResult').style.display = 'block';
+
+      // Unlock info panel
+      unlockInfo();
+
+      if (svc === 'netflix') {
+        // Tunggu fetch selesai lalu tampilkan
+        if (fetchPromise) {
+          fetchPromise.then(data => {
+            if (data.success) {
+              document.getElementById('tokenExpiry').textContent = data.expires_at || 'Unknown';
+              document.getElementById('pcLink').href = data.pc_url;
+              document.getElementById('pcUrl').textContent = data.pc_url;
+              document.getElementById('mobileLink').href = data.mobile_url;
+              document.getElementById('mobileUrl').textContent = data.mobile_url;
+              document.getElementById('tokenOk').style.display = 'block';
+            } else {
+              showTokenError(data.error || 'Gagal generate token');
+            }
+          }).catch(e => showTokenError('Network error: ' + e.message));
+        } else {
+          showTokenError('Cookie ID tidak ditemukan');
+        }
+      }
+      // Non-Netflix: cookie sudah di DOM, langsung tampil
+    }
+  }, 1000);
+}
+
+function showTokenError(msg) {
+  const el = document.getElementById('tokenErr');
+  el.textContent = '❌ ' + msg;
+  el.style.display = 'block';
+  document.getElementById('btnRetry').style.display = 'block';
+}
+
+function retryGen() {
+  countdownActive = false;
+  document.getElementById('tokenErr').style.display = 'none';
+  document.getElementById('btnRetry').style.display = 'none';
+  document.getElementById('tokenOk').style.display = 'none';
+  document.getElementById('stepResult').style.display = 'none';
+  // Re-lock
+  const overlay = document.getElementById('infoLockOverlay');
+  if (overlay) { overlay.style.display = 'flex'; }
+  document.getElementById('stepInit').style.display = 'block';
+  document.getElementById('cdBar').style.transition = 'none';
+  document.getElementById('cdBar').style.width = '0%';
+  document.getElementById('cdNumber').textContent = SECONDS;
+}
+
+function unlockInfo() {
+  const overlay = document.getElementById('infoLockOverlay');
+  if (overlay) {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.6s ease';
+    setTimeout(() => { overlay.style.display = 'none'; }, 600);
+  }
+}
+
+// Copy raw cookies
+function copyRawCookies() {
+  const text = document.getElementById('rawCookieBox')?.value || '';
+  copyText(text, '✅ Cookies disalin!');
+}
+
+// Console script
+function copyConsoleScript(service) {
+  const rawData = document.getElementById('rawCookieBox')?.value || '';
+  let cookies;
+  try {
+    cookies = JSON.parse(rawData);
+    if (!Array.isArray(cookies)) cookies = parseNetscape(rawData);
+  } catch(e) { cookies = parseNetscape(rawData); }
+
+  let script = 'const cookies = ' + JSON.stringify(cookies) + ';\n';
+  script += 'for (const item of cookies) {\n';
+  script += '  document.cookie = `${item.name}=${item.value}; domain=${item.domain}; path=/; expires=Tue, 19 Jan 2038 03:14:07 GMT; SameSite=Lax`;\n';
+  script += '}\nalert("Cookies injected!");\nlocation.reload();';
+
+  const sites = { spotify:'open.spotify.com', udemy:'udemy.com', crunchyroll:'crunchyroll.com', claude:'claude.ai', gog:'gog.com', primevideo:'primevideo.com' };
+  copyText(script, `✅ Script disalin! Buka ${sites[service] || 'website'}, F12 > Console > paste`);
+}
+
+function parseNetscape(text) {
+  const cookies = [];
+  text.split('\n').forEach(line => {
+    if (!line.trim() || line.startsWith('#')) return;
+    const parts = line.split('\t');
+    if (parts.length >= 7) cookies.push({ domain: parts[0].trim(), name: parts[5].trim(), value: parts[6].trim() });
+  });
+  return cookies;
+}
+</script>
+
+<style>
+/* ── Generate page layout ── */
+.gen-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  align-items: start;
+}
+.gen-card { padding: 28px 24px; }
+
+/* Info card dengan lock overlay */
+.info-locked-card { position: relative; overflow: visible; }
+.info-lock-overlay {
+  position: absolute; inset: 0; border-radius: var(--radius-md);
+  background: rgba(6,6,8,0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10; border-radius: inherit;
+}
+
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+/* ── Mobile: stack layout ── */
+@media (max-width: 900px) {
+  .gen-layout {
+    grid-template-columns: 1fr;
+  }
+  .gen-layout > div:last-child {
+    order: -1; /* info card muncul dulu di mobile */
+  }
+}
+@media (max-width: 480px) {
+  .gen-card { padding: 20px 16px; }
+}
+</style>
 {% endblock %}
