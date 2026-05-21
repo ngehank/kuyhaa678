@@ -601,6 +601,103 @@ def delete_all():
         flash(f'Failed to delete data: {e}', 'danger')
     return redirect(url_for('admin.results'))
 
+
+@admin_bp.route('/delete-duplicates', methods=['POST'])
+@login_required
+@admin_required
+def delete_duplicates():
+    """
+    Hapus duplikasi cookies berdasarkan isi dari cookie_text secara persis.
+    Menyimpan entri terbaru (ID terbesar) untuk setiap grup duplikat.
+    """
+    from sqlalchemy import func
+
+    deleted_total = 0
+
+    try:
+        # Cari grup yang memiliki cookie_text dan service_type yang sama persis
+        dup_groups = db.session.query(
+            CookieResult.cookie_text,
+            CookieResult.service_type,
+            func.max(CookieResult.id).label('keep_id'),
+            func.count(CookieResult.id).label('cnt')
+        ).filter(
+            CookieResult.cookie_text.isnot(None),
+            CookieResult.cookie_text != ''
+        ).group_by(
+            CookieResult.cookie_text,
+            CookieResult.service_type
+        ).having(
+            func.count(CookieResult.id) > 1
+        ).all()
+
+        ids_to_delete = []
+        for group in dup_groups:
+            # Ambil semua ID dalam grup ini, selain yang ingin kita pertahankan (keep_id)
+            dupes = db.session.query(CookieResult.id).filter(
+                CookieResult.cookie_text == group.cookie_text,
+                CookieResult.service_type == group.service_type,
+                CookieResult.id != group.keep_id
+            ).all()
+            ids_to_delete.extend([d.id for d in dupes])
+
+        if ids_to_delete:
+            # SQLite default limits expression depth/parameters, so delete in chunks if needed
+            # but usually it's fine for small/medium sizes. Let's do it in one query first.
+            deleted_total = CookieResult.query.filter(
+                CookieResult.id.in_(ids_to_delete)
+            ).delete(synchronize_session='fetch')
+            db.session.commit()
+
+        flash(
+            f'✅ Berhasil menghapus {deleted_total} cookies dengan isi duplikat.',
+            'success'
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Gagal menghapus duplikat: {e}', 'danger')
+
+    return redirect(url_for('admin.results'))
+
+
+@admin_bp.route('/api/duplicate-stats')
+@login_required
+@admin_required
+def api_duplicate_stats():
+    """Preview statistik cookies duplikat berdasarkan isi."""
+    from sqlalchemy import func
+
+    try:
+        dup_groups = db.session.query(
+            func.count(CookieResult.id).label('cnt')
+        ).filter(
+            CookieResult.cookie_text.isnot(None),
+            CookieResult.cookie_text != ''
+        ).group_by(
+            CookieResult.cookie_text,
+            CookieResult.service_type
+        ).having(
+            func.count(CookieResult.id) > 1
+        ).all()
+
+        dup_by_text = sum(row.cnt - 1 for row in dup_groups)
+        dup_groups_count = len(dup_groups)
+
+        total_cookies = CookieResult.query.count()
+
+        return jsonify({
+            'total': total_cookies,
+            'dup_text': dup_by_text,
+            'dup_text_groups': dup_groups_count,
+            'will_delete': dup_by_text,
+            'after_clean': max(0, total_cookies - dup_by_text),
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
 @admin_bp.route('/recheck-all', methods=['POST'])
 @login_required
 @admin_required
