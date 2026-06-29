@@ -124,6 +124,8 @@ def _run_check_background(flask_app, my_job_id, service_type, file_contents, pro
                     fname, content = task_q.get_nowait()
                 except queue.Empty:
                     break
+
+                try:
                     if service_type == 'netflix':
                         result = check_single_cookie(content, proxies)
                     else:
