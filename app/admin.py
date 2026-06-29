@@ -475,8 +475,15 @@ def progress_stream():
 @admin_required
 def debug_checker():
     """Cek apakah modul checker berhasil di-import."""
-    from .checker import CHECKER_AVAILABLE
-    import sys, os
+    from .checker import CHECKER_AVAILABLE, check_single_cookie
+    import sys, os, traceback
+    
+    test_res = "Not tested"
+    try:
+        test_res = check_single_cookie("test_cookie", [{'http': 'http://127.0.0.1'}])
+    except Exception as e:
+        test_res = traceback.format_exc()
+
     checker_dir = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         'Netflix-Cookie-Checker-main'
@@ -487,6 +494,7 @@ def debug_checker():
         'checker_dir': checker_dir,
         'main_py_exists': main_exists,
         'db_count': CookieResult.query.count(),
+        'test_res': test_res,
     }
     return jsonify(info)
 

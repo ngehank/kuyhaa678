@@ -146,13 +146,18 @@ def check_single_cookie(cookie_text: str, proxy_list: list = None) -> dict:
         }
 
     except requests.exceptions.Timeout:
-        return {'status': 'error', 'error_reason': 'Timeout'}
+        return {'status': 'error', 'error_reason': 'Proxy Timeout / Sangat Lambat'}
     except requests.exceptions.ProxyError:
-        return {'status': 'error', 'error_reason': 'Proxy error'}
+        return {'status': 'error', 'error_reason': 'Proxy Error / Koneksi Ditolak'}
     except requests.exceptions.RequestException as e:
-        return {'status': 'error', 'error_reason': str(e)}
+        err_str = str(e)
+        if "Max retries exceeded" in err_str:
+            return {'status': 'error', 'error_reason': 'Proxy Mati / Tidak Terhubung'}
+        if "Connection aborted" in err_str:
+            return {'status': 'error', 'error_reason': 'Koneksi Terputus Tiba-tiba'}
+        return {'status': 'error', 'error_reason': err_str.split(':', 1)[-1].strip()[:50]}
     except Exception as e:
-        return {'status': 'error', 'error_reason': str(e)}
+        return {'status': 'error', 'error_reason': 'Parsing error / Cookie kadaluarsa'}
 
 
 
