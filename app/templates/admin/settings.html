@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Settings — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">⚙️ Settings</h1>
+    <p class="page-subtitle">Configure token generation rules</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 600px;">
+  <form method="POST">
+    <!-- Removed CSRF token to fix UndefinedError -->
+    <div class="form-group">
+      <label class="form-label" style="font-weight: 800; font-size: 16px;">Standard with Ads Distribution</label>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
+        Set the probability (0-100%) that a user will receive a <strong>Standard with Ads</strong> account when they generate a token. This percentage is hidden from users.
+      </p>
+      
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <input type="range" name="ads_percentage" id="ads_slider" min="0" max="100" value="{{ ads_percentage }}" style="flex: 1;" oninput="document.getElementById('ads_val').textContent = this.value + '%'">
+        <div style="background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 8px; font-weight: 900; font-size: 18px; color: var(--red); width: 80px; text-align: center;" id="ads_val">{{ ads_percentage }}%</div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Save Settings</button>
+  </form>
+</div>
+{% endblock %}

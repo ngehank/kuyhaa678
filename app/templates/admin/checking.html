@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Checking… — NF Manager{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2 class="page-title">⏳ Checking Cookies...</h2>
+  <p class="page-subtitle">Process running in background, do not close this page</p>
+</div>
+
+<div class="card mb-3">
+  <div class="flex-between mb-2">
+    <span id="progressText" style="font-size:15px;font-weight:600;">Starting...</span>
+    <span id="progressPct" style="font-size:20px;font-weight:800;color:var(--red);">0%</span>
+  </div>
+  <div class="progress-wrap" style="height:10px;">
+    <div class="progress-bar" id="progressBar" style="width:0%;background:linear-gradient(90deg,var(--red),#ff6b6b);"></div>
+  </div>
+  <div class="flex flex-wrap" style="gap:16px;margin-top:16px;font-size:13px;align-items:center;">
+    <span>✅ Success: <strong id="cntSuccess" style="color:var(--success);">0</strong></span>
+    <span>❌ Failed: <strong id="cntFailed" style="color:var(--red);">0</strong></span>
+    <span>⚠️ Error: <strong id="cntError" style="color:var(--warning);">0</strong></span>
+    <span>📊 Total: <strong id="cntTotal" style="color:#60a5fa;">{{ total }}</strong></span>
+    <button onclick="stopChecking()" id="btnStop" class="btn btn-sm" style="margin-left:auto; background:var(--red); color:white; font-size:12px; border:none; border-radius:4px; cursor:pointer;">🛑 Stop</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">📋 Realtime Logs</div>
+  <div id="logContainer" style="max-height:400px;overflow-y:auto;font-size:13px;font-family:monospace;">
+  </div>
+</div>
+
+<div id="doneSection" style="display:none;" class="mt-3">
+  <div class="alert alert-success" style="font-size:15px;">
+    ✅ Checking complete! Cookies saved to database successfully.
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{{ url_for('admin.results') }}" class="btn btn-primary" style="flex:1;min-width:140px;">🗄️ View Database</a>
+    <a href="{{ url_for('admin.check') }}" class="btn btn-secondary" style="flex:1;min-width:140px;">🔍 Check Again</a>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary" style="flex:1;min-width:140px;">📊 Dashboard</a>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const evtSource = new EventSource("{{ url_for('admin.progress_stream') }}");
+const log = document.getElementById('logContainer');
+const bar = document.getElementById('progressBar');
+const pct = document.getElementById('progressPct');
+const txt = document.getElementById('progressText');
+
+evtSource.onmessage = function(e) {
+  const d = JSON.parse(e.data);
+  if (d.heartbeat) return;
+
+  document.getElementById('cntSuccess').textContent = d.success || 0;
+  document.getElementById('cntFailed').textContent = d.failed || 0;
+  document.getElementById('cntError').textContent = d.error || 0;
+
+  if (d.total > 0) {
+    const p = Math.round(d.done * 100 / d.total);
+    bar.style.width = p + '%';
+    pct.textContent = p + '%';
+    txt.textContent = `Processing ${d.done} / ${d.total} cookies...`;
+  }
+
+  if (d.current && d.current !== 'DONE') {
+    const cls = d.status === 'success' || d.status === 'free' ? 'ok' : d.status === 'failed' ? 'fail' : 'err';
+    const icon = d.status === 'success' ? '✅' : d.status === 'free' ? '🆓' : d.status === 'failed' ? '❌' : '⚠️';
+    log.innerHTML += `<div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;gap:8px;">${icon} <span style="color:var(--text);">${d.current}</span><span style="color:var(--text-muted);margin-left:auto;">${d.status}</span></div>`;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  if (d.status === 'done' || d.current === 'DONE') {
+    evtSource.close();
+    document.getElementById('doneSection').style.display = 'block';
+    txt.textContent = 'Done!';
+    bar.style.width = '100%';
+    pct.textContent = '100%';
+  }
+};
+
+evtSource.onerror = function() {
+  evtSource.close();
+  document.getElementById('doneSection').style.display = 'block';
+  document.getElementById('btnStop').style.display = 'none';
+};
+
+function stopChecking() {
+  if (confirm("Are you sure you want to stop the checking process?")) {
+    document.getElementById('btnStop').textContent = "Stopping...";
+    document.getElementById('btnStop').disabled = true;
+    fetch("{{ url_for('admin.api_cancel') }}", { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        txt.textContent = 'Stopped by user';
+        document.getElementById('doneSection').style.display = 'block';
+        document.getElementById('btnStop').style.display = 'none';
+      });
+  }
+}
+</script>
+{% endblock %}
