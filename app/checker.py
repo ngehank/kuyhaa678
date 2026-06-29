@@ -87,15 +87,16 @@ def check_single_cookie(cookie_text: str, proxy_list: list = None) -> dict:
             'Accept-Encoding': 'identity',
         }
 
-        proxy = None
         req_proxies = None
         if proxy_list:
             import random
             proxy = random.choice(proxy_list)
-            # Ensure proper schema if missing
-            if "://" not in proxy:
-                proxy = f"http://{proxy}"
-            req_proxies = {'http': proxy, 'https': proxy}
+            if isinstance(proxy, dict):
+                req_proxies = proxy
+            else:
+                if "://" not in proxy:
+                    proxy = f"http://{proxy}"
+                req_proxies = {'http': proxy, 'https': proxy}
 
         response = session.get(
             'https://www.netflix.com/account/membership',
